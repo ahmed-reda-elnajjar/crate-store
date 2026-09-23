@@ -27,7 +27,8 @@ function loadBitmap(file: Blob): Promise<ImageBitmap | HTMLImageElement> {
   });
 }
 
-export async function cutoutGarment(file: Blob): Promise<Blob> {
+export async function cutoutGarment(file: Blob, opts: { trim?: boolean } = {}): Promise<Blob> {
+  const trim = opts.trim ?? true;
   const src = await loadBitmap(file);
   const scale = Math.min(1, MAX_SIDE / Math.max(src.width, src.height));
   const w = Math.round(src.width * scale);
@@ -63,6 +64,23 @@ export async function cutoutGarment(file: Blob): Promise<Blob> {
       for (const n of next) if (n >= 0 && !bg[n] && dist(n) < TOLERANCE) (bg[n] = 1), stack.push(n);
     }
 
+    // Enclosed background-coloured holes (the neck opening inside a collar) are
+    // background too; small ones (a white logo, a zip pull) stay part of the garment.
+    const minHole = w * h * 0.002;
+    const seen = new Uint8Array(w * h);
+    for (let start = 0; start < w * h; start++) {
+      if (bg[start] || seen[start] || dist(start) >= TOLERANCE) continue;
+      const region = [start];
+      seen[start] = 1;
+      for (let k = 0; k < region.length; k++) {
+        const i = region[k];
+        const x = i % w;
+        const next = [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i >= w ? i - w : -1, i < w * (h - 1) ? i + w : -1];
+        for (const n of next) if (n >= 0 && !bg[n] && !seen[n] && dist(n) < TOLERANCE) (seen[n] = 1), region.push(n);
+      }
+      if (region.length > minHole) for (const i of region) bg[i] = 1;
+    }
+
     for (let i = 0; i < w * h; i++) {
       if (bg[i]) {
         px[i * 4 + 3] = 0;
@@ -76,6 +94,12 @@ export async function cutoutGarment(file: Blob): Promise<Blob> {
         if (d < SOFT) px[i * 4 + 3] = Math.round((px[i * 4 + 3] * (d - TOLERANCE * 0.5)) / (SOFT - TOLERANCE * 0.5));
       }
     }
+  }
+
+  if (!trim) {
+    // Keep the full canvas so the garment stays registered to the model photo.
+    ctx.putImageData(img, 0, 0);
+    return new Promise((resolve) => canvas.toBlob((b) => resolve(b ?? file), "image/png"));
   }
 
   // Trim to the opaque bounding box.

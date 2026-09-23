@@ -11,8 +11,25 @@ import { ImageSlot } from "./ImageSlot";
 
 const wearImg = (productId: string) => `wear-g-${productId}`;
 
-/** The fit for one garment: its own override, else the shared setting. */
-const fitOf = (wear: WearSettings, id: string): WearFit => wear.fits?.[id] ?? { topPct: wear.topPct, scalePct: wear.scalePct, xPct: wear.xPct };
+/** Aligned garments sit 1:1 on the model photo; nudges start from zero. */
+const ALIGNED_FIT: WearFit = { topPct: 0, scalePct: 100, xPct: 0 };
+
+/** The fit for one garment: its own override, else the shared default for the mode. */
+const fitOf = (wear: WearSettings, id: string): WearFit =>
+  wear.aligned
+    ? (wear.alignedFits?.[id] ?? ALIGNED_FIT)
+    : (wear.fits?.[id] ?? { topPct: wear.topPct, scalePct: wear.scalePct, xPct: wear.xPct });
+
+/** Background removal for the current mode: trimmed cut-outs, or full-canvas when aligned. */
+const cutterFor = (wear: WearSettings) => (file: Blob) => cutoutGarment(file, { trim: !wear.aligned });
+
+/** Cuts the neck opening out of a trimmed garment: an ellipse centred on its top edge. */
+function neckMask(neck: number | undefined, w: number): React.CSSProperties {
+  if (!neck) return {};
+  const rx = (w * neck) / 200;
+  const mask = `radial-gradient(${rx}px ${rx * 1.15}px at 50% 0, transparent 97%, #000 100%)`;
+  return { maskImage: mask, WebkitMaskImage: mask };
+}
 
 function useIsMobile() {
   const [m, setM] = useState(false);
@@ -61,9 +78,10 @@ export function WearCarousel({ wear, products, editable, standalone }: { wear: W
     const pos = rel === 0 ? 0 : rel === 1 ? 1 : rel === n - 1 ? -1 : rel <= n / 2 ? 2 : -2;
     const f = fitOf(wear, p.id);
     const w = (mw * f.scalePct) / 100;
-    // Cut-outs are trimmed to the garment and pinned to the top of this box, so
-    // width sets the size and the collar lands exactly on the collar line.
-    const h = w * 1.4;
+    // Trimmed cut-outs are pinned to the top of a tall box, so width sets the size
+    // and the collar lands on the collar line. Aligned garments share the model
+    // photo's canvas, so their box is the model frame itself.
+    const h = wear.aligned ? (mh * f.scalePct) / 100 : w * 1.4;
     const cx = (f.xPct / 100) * mw;
     return (
       <div
@@ -77,9 +95,10 @@ export function WearCarousel({ wear, products, editable, standalone }: { wear: W
           opacity: pos === 0 ? 1 : Math.abs(pos) === 1 ? 0.28 : 0,
           filter: pos === 0 ? "none" : "blur(3px)",
           pointerEvents: pos === 0 && editable ? "auto" : "none",
+          ...(wear.aligned ? {} : neckMask(f.neck, w)),
         }}
       >
-        <ImageSlot id={wearImg(p.id)} fit="contain" anchorTop process={cutoutGarment} placeholder={editable ? `garment photo ${i + 1}` : ""} editable={editable && pos === 0} alt={p.name} />
+        <ImageSlot id={wearImg(p.id)} fit="contain" anchorTop={!wear.aligned} process={cutterFor(wear)} placeholder={editable ? `garment photo ${i + 1}` : ""} editable={editable && pos === 0} alt={p.name} />
       </div>
     );
   });
@@ -153,18 +172,20 @@ export function WearCarousel({ wear, products, editable, standalone }: { wear: W
 function WearTools({ wear, products, garments, idx, onPick }: { wear: WearSettings; products: Product[]; garments: Product[]; idx: number; onPick: (i: number) => void }) {
   const addable = products.filter((p) => !wear.garmentIds.includes(p.id) && p.category !== "accessories");
   const cur = garments[idx];
-  const f = cur ? fitOf(wear, cur.id) : { topPct: wear.topPct, scalePct: wear.scalePct, xPct: wear.xPct };
+  const f = cur ? fitOf(wear, cur.id) : fitOf(wear, "");
+  const key = wear.aligned ? "alignedFits" : "fits";
+  const own = cur ? wear[key]?.[cur.id] : undefined;
   const [working, setWorking] = useState<string | null>(null);
 
   const setFit = (patch: Partial<WearFit>) => {
     if (!cur) return;
-    updateWear({ fits: { ...wear.fits, [cur.id]: { ...f, ...patch } } });
+    updateWear({ [key]: { ...wear[key], [cur.id]: { ...f, ...patch } } });
   };
-  const applyToAll = () => updateWear({ ...f, fits: {} });
+  const applyToAll = () => updateWear({ [key]: Object.fromEntries(garments.map((g) => [g.id, f])) });
   const reset = () => {
-    if (!cur || !wear.fits) return;
-    const { [cur.id]: _drop, ...rest } = wear.fits;
-    updateWear({ fits: rest });
+    if (!cur || !wear[key]) return;
+    const { [cur.id]: _drop, ...rest } = wear[key]!;
+    updateWear({ [key]: rest });
   };
 
   /** Re-run background removal on a photo uploaded before it existed. */
@@ -173,7 +194,7 @@ function WearTools({ wear, products, garments, idx, onPick }: { wear: WearSettin
     if (!blob) return toast(`Add a photo for ${p.name} first.`);
     setWorking(p.id);
     try {
-      await putImage(wearImg(p.id), await cutoutGarment(blob));
+      await putImage(wearImg(p.id), await cutterFor(wear)(blob));
     } finally {
       setWorking(null);
     }
@@ -182,13 +203,23 @@ function WearTools({ wear, products, garments, idx, onPick }: { wear: WearSettin
   return (
     <div className="wear-tools">
       <div className="fitbar">
+        <div className="field">
+          <label htmlFor="wear-mode">Garment photos</label>
+          <select id="wear-mode" className="input" value={wear.aligned ? "aligned" : "overlay"} onChange={(e) => updateWear({ aligned: e.target.value === "aligned" })}>
+            <option value="overlay">Flat product shots (trimmed and fitted)</option>
+            <option value="aligned">Made on the model photo (same size, 1:1)</option>
+          </select>
+        </div>
         <div className="fit-for"><span className="label">Fit on photo</span><b>{cur?.name ?? "—"}</b></div>
-        <label className="slider"><span className="t"><span>Collar position</span><b>{f.topPct}%</b></span><input type="range" min={0} max={45} step={0.5} value={f.topPct} onChange={(e) => setFit({ topPct: +e.target.value })} /></label>
-        <label className="slider"><span className="t"><span>Garment width</span><b>{f.scalePct}%</b></span><input type="range" min={40} max={160} value={f.scalePct} onChange={(e) => setFit({ scalePct: +e.target.value })} /></label>
-        <label className="slider"><span className="t"><span>Side-to-side</span><b>{f.xPct}</b></span><input type="range" min={-30} max={30} step={0.5} value={f.xPct} onChange={(e) => setFit({ xPct: +e.target.value })} /></label>
+        <label className="slider"><span className="t"><span>{wear.aligned ? "Up / down" : "Collar position"}</span><b>{f.topPct}%</b></span><input type="range" min={wear.aligned ? -10 : 0} max={wear.aligned ? 10 : 45} step={0.5} value={f.topPct} onChange={(e) => setFit({ topPct: +e.target.value })} /></label>
+        <label className="slider"><span className="t"><span>{wear.aligned ? "Size" : "Garment width"}</span><b>{f.scalePct}%</b></span><input type="range" min={wear.aligned ? 85 : 40} max={wear.aligned ? 115 : 160} step={0.5} value={f.scalePct} onChange={(e) => setFit({ scalePct: +e.target.value })} /></label>
+        <label className="slider"><span className="t"><span>Side-to-side</span><b>{f.xPct}</b></span><input type="range" min={wear.aligned ? -10 : -30} max={wear.aligned ? 10 : 30} step={0.5} value={f.xPct} onChange={(e) => setFit({ xPct: +e.target.value })} /></label>
+        {!wear.aligned && (
+          <label className="slider"><span className="t"><span>Neck opening</span><b>{f.neck ? `${f.neck}%` : "Off"}</b></span><input type="range" min={0} max={60} value={f.neck ?? 0} onChange={(e) => setFit({ neck: +e.target.value })} /></label>
+        )}
         <div className="fit-acts">
           <button className="btn btn-secondary h32" onClick={applyToAll}>Use this fit for all</button>
-          {cur && wear.fits?.[cur.id] && <button className="btn btn-ghost h32" onClick={reset}>Reset</button>}
+          {own && <button className="btn btn-ghost h32" onClick={reset}>Reset</button>}
         </div>
         <label className="slider"><span className="t"><span>Rotate every</span><b>{wear.rotateSeconds}s</b></span><input type="range" min={2} max={8} step={0.5} value={wear.rotateSeconds} onChange={(e) => updateWear({ rotateSeconds: +e.target.value })} /></label>
         <label className="radio"><input type="checkbox" checked={wear.colorPhotos} onChange={(e) => updateWear({ colorPhotos: e.target.checked })} /><span className="dot" />Show these photos in colour</label>
@@ -199,7 +230,7 @@ function WearTools({ wear, products, garments, idx, onPick }: { wear: WearSettin
         <div className="wear-cells">
           {garments.map((p, i) => (
             <div key={p.id} className={i === idx ? "cur" : undefined}>
-              <div className="ph"><ImageSlot id={wearImg(p.id)} fit="contain" process={cutoutGarment} placeholder="drop photo" editable alt={p.name} /></div>
+              <div className="ph"><ImageSlot id={wearImg(p.id)} fit="contain" process={cutterFor(wear)} placeholder="drop photo" editable alt={p.name} /></div>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 4, fontSize: 12 }}>
                 <button className="unbtn" style={{ fontWeight: 600, textAlign: "left" }} onClick={() => onPick(i)}>{p.name}</button>
                 <button className="unbtn" aria-label={`Remove ${p.name} from rotation`} onClick={() => updateWear({ garmentIds: wear.garmentIds.filter((x) => x !== p.id) })}>×</button>
@@ -221,7 +252,9 @@ function WearTools({ wear, products, garments, idx, onPick }: { wear: WearSettin
           </div>
         )}
         <span className="muted" style={{ fontSize: 12 }}>
-          Upload flat product shots on a plain white or grey background: the background is removed and the photo is trimmed to the garment automatically, so every piece lines up at the collar. For the most natural look, the model should stand facing the camera with arms relaxed at the sides, in a fitted plain top. Photos save straight away; fit settings go live when you publish.
+          {wear.aligned
+            ? "Each garment photo must be the same size as the model photo, with the garment exactly where it sits on her body and everything else plain white. The white is removed automatically, including the neck opening. Photos save straight away; fit settings go live when you publish."
+            : "Upload flat product shots on a plain white or grey background: the background is removed and the photo is trimmed to the garment, so every piece lines up at the collar. Use Neck opening to cut the inside of the collar away. Photos save straight away; fit settings go live when you publish."}
         </span>
       </div>
     </div>

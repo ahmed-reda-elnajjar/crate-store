@@ -83,12 +83,22 @@ export interface WearFit {
   topPct: number;
   scalePct: number;
   xPct: number;
+  /** Neck opening cut out of the collar, as % of the garment width (0 = none). */
+  neck?: number;
 }
 
 export interface WearSettings {
   garmentIds: string[];
   /** Per-garment fit; garments without an entry use the shared topPct/scalePct/xPct. */
   fits?: Record<string, WearFit>;
+  /**
+   * Aligned mode: each garment photo has the same canvas as the model photo
+   * with the garment already where it sits on her body (made by dressing the
+   * model with AI, then keeping only the garment). Garments then overlay the
+   * model 1:1 instead of being trimmed and positioned.
+   */
+  aligned?: boolean;
+  alignedFits?: Record<string, WearFit>;
   topPct: number;
   scalePct: number;
   xPct: number;
