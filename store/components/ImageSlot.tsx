@@ -12,6 +12,10 @@ interface Props {
   fit?: "cover" | "contain";
   round?: boolean;
   alt?: string;
+  /** Pin the image to the top edge instead of centring it (garments: collar at the top). */
+  anchorTop?: boolean;
+  /** Transform an uploaded file before it is stored (e.g. background removal). */
+  process?: (file: File) => Promise<Blob>;
 }
 
 const MAX_BYTES = 8 * 1024 * 1024;
@@ -21,16 +25,25 @@ const MAX_BYTES = 8 * 1024 * 1024;
  * striped placeholder when empty, and — when editable — accepts a dropped or
  * browsed image file. Wrap in `.ph` (and `.grayscale` for product photography).
  */
-export function ImageSlot({ id, placeholder = "", editable, fit = "cover", round, alt = "" }: Props) {
+export function ImageSlot({ id, placeholder = "", editable, fit = "cover", round, alt = "", anchorTop, process }: Props) {
   const url = useImage(id);
   const input = useRef<HTMLInputElement>(null);
   const [drag, setDrag] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const accept = async (file?: File | null) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) return toast("That file isn't an image.");
     if (file.size > MAX_BYTES) return toast("Images must be under 8 MB.");
-    await putImage(id, file);
+    if (!process) return putImage(id, file);
+    setBusy(true);
+    try {
+      await putImage(id, await process(file));
+    } catch {
+      await putImage(id, file);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const onDrop = (e: DragEvent) => {
@@ -39,7 +52,7 @@ export function ImageSlot({ id, placeholder = "", editable, fit = "cover", round
     void accept(e.dataTransfer.files?.[0]);
   };
 
-  const cls = ["slot", fit === "contain" && "contain", round && "round", editable && "edit", drag && "drag"].filter(Boolean).join(" ");
+  const cls = ["slot", fit === "contain" && "contain", anchorTop && "top", round && "round", editable && "edit", drag && "drag"].filter(Boolean).join(" ");
 
   if (!editable) {
     return (
@@ -61,7 +74,7 @@ export function ImageSlot({ id, placeholder = "", editable, fit = "cover", round
       onDragLeave={() => setDrag(false)}
       onDrop={onDrop}
     >
-      {url ? <img src={url} alt={alt} draggable={false} /> : <span className="slot-empty">{placeholder || "Drop image"}</span>}
+      {busy ? <span className="slot-empty">Removing background…</span> : url ? <img src={url} alt={alt} draggable={false} /> : <span className="slot-empty">{placeholder || "Drop image"}</span>}
       {url && (
         <span className="slot-tools" onClick={(e) => e.stopPropagation()}>
           <button type="button" onClick={() => input.current?.click()}>Replace</button>

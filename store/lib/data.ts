@@ -79,8 +79,16 @@ export const SEED_HERO: Hero = {
   body: "Heavyweight cotton, ripstop and nylon. 22 pieces, made in limited runs.",
 };
 
+export interface WearFit {
+  topPct: number;
+  scalePct: number;
+  xPct: number;
+}
+
 export interface WearSettings {
   garmentIds: string[];
+  /** Per-garment fit; garments without an entry use the shared topPct/scalePct/xPct. */
+  fits?: Record<string, WearFit>;
   topPct: number;
   scalePct: number;
   xPct: number;
@@ -91,8 +99,9 @@ export interface WearSettings {
 
 export const SEED_WEAR: WearSettings = {
   garmentIds: ["nylon-track-jacket", "racing-crew", "480gsm-hoodie", "moto-bomber", "puffer-vest", "fleece-quarter-zip"],
-  topPct: 17,
-  scalePct: 78,
+  // Tuned for trimmed cut-outs on a full-body, front-facing model photo.
+  topPct: 23,
+  scalePct: 84,
   xPct: 0,
   colorPhotos: false,
   rotateSeconds: 3,

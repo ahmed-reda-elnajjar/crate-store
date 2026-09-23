@@ -60,6 +60,10 @@ export async function putImage(id: string, file: Blob) {
   channel?.postMessage(id);
 }
 
+export function getImageBlob(id: string): Promise<Blob | undefined> {
+  return tx<Blob | undefined>("readonly", (s) => s.get(id));
+}
+
 export async function removeImage(id: string) {
   await tx("readwrite", (s) => s.delete(id));
   await refresh(id);
