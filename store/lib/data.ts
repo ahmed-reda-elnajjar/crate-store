@@ -99,6 +99,8 @@ export interface WearSettings {
    */
   aligned?: boolean;
   alignedFits?: Record<string, WearFit>;
+  /** Built-in photos (public/lookbook) used until an admin uploads replacements. "model" is the model photo. */
+  images?: Record<string, string>;
   topPct: number;
   scalePct: number;
   xPct: number;
@@ -108,12 +110,21 @@ export interface WearSettings {
 }
 
 export const SEED_WEAR: WearSettings = {
-  garmentIds: ["nylon-track-jacket", "racing-crew", "480gsm-hoodie", "moto-bomber", "puffer-vest", "fleece-quarter-zip"],
+  // Garment photos were fitted to the model photo offline (tools/fit-jackets.py), so they overlay 1:1.
+  garmentIds: ["nylon-track-jacket", "racing-crew", "moto-bomber", "fleece-quarter-zip"],
+  aligned: true,
+  images: {
+    model: "/lookbook/model.jpg",
+    "nylon-track-jacket": "/lookbook/red.webp",
+    "racing-crew": "/lookbook/black.webp",
+    "moto-bomber": "/lookbook/olive.webp",
+    "fleece-quarter-zip": "/lookbook/cream.webp",
+  },
   // Tuned for trimmed cut-outs on a full-body, front-facing model photo.
   topPct: 23,
   scalePct: 84,
   xPct: 0,
-  colorPhotos: false,
+  colorPhotos: true,
   rotateSeconds: 3,
   title: "THE JACKET COLLECTION",
 };

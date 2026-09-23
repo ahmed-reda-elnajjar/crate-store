@@ -64,7 +64,8 @@ export interface State {
   ui: UiState;
 }
 
-const STORAGE_KEY = "crate-store:v1";
+// v2: the lookbook ships with built-in, pre-fitted photos; older saved drafts predate them.
+const STORAGE_KEY = "crate-store:v2";
 
 const SEED_CONTENT: SiteContent = {
   products: SEED_PRODUCTS,

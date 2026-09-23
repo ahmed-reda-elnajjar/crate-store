@@ -149,7 +149,11 @@ export function WearCarousel({ wear, products, editable, standalone }: { wear: W
     return () => el.removeEventListener("wheel", onWheel);
   }, [editable]);
 
-  const [mw, mh, mTop, side] = mobile ? [280, 420, 16, 250] : [440, 660, 40, 420];
+  // The model frame takes the model photo's shape (height fixed, width follows), capped to the stage.
+  const [modelAspect, setModelAspect] = useState(1.5);
+  const mh = mobile ? 420 : 660;
+  const mw = Math.round(Math.min(mobile ? 360 : 640, mh / modelAspect));
+  const [mTop, side] = mobile ? [16, 250] : [40, 420];
   const imgClass = wear.colorPhotos ? "" : "grayscale";
   const cur = G[idx];
 
@@ -192,6 +196,7 @@ export function WearCarousel({ wear, products, editable, standalone }: { wear: W
       >
         <ImageSlot
           id={wearImg(p.id)}
+          src={wear.images?.[p.id]}
           fit="contain"
           anchorTop={!wear.aligned}
           placeholder={editable ? `garment photo ${i + 1}` : ""}
@@ -240,7 +245,15 @@ export function WearCarousel({ wear, products, editable, standalone }: { wear: W
           </div>
         )}
         <div className={`${imgClass} ph`} style={{ position: "absolute", left: "50%", top: mTop, width: mw, height: mh, marginLeft: -mw / 2, zIndex: 2 }}>
-          <ImageSlot id="wear-model" fit="contain" placeholder={editable ? "full-body model photo" : "model photo"} editable={editable} alt="Model" />
+          <ImageSlot
+            id="wear-model"
+            fit="contain"
+            src={wear.images?.model}
+            placeholder={editable ? "full-body model photo" : "model photo"}
+            editable={editable}
+            alt="Model"
+            onAspect={(a) => setModelAspect((m) => (Math.abs(m - a) < 0.001 ? m : a))}
+          />
         </div>
         {layers}
         {cur && !mobile && (
@@ -339,7 +352,7 @@ function WearTools({ wear, products, garments, idx, onPick }: { wear: WearSettin
         <div className="wear-cells">
           {garments.map((p, i) => (
             <div key={p.id} className={i === idx ? "cur" : undefined}>
-              <div className="ph"><ImageSlot id={wearImg(p.id)} fit="contain" process={cutterFor(wear)} placeholder="drop photo" editable alt={p.name} /></div>
+              <div className="ph"><ImageSlot id={wearImg(p.id)} src={wear.images?.[p.id]} fit="contain" process={cutterFor(wear)} placeholder="drop photo" editable alt={p.name} /></div>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 4, fontSize: 12 }}>
                 <button className="unbtn" style={{ fontWeight: 600, textAlign: "left" }} onClick={() => onPick(i)}>{p.name}</button>
                 <button className="unbtn" aria-label={`Remove ${p.name} from rotation`} onClick={() => updateWear({ garmentIds: wear.garmentIds.filter((x) => x !== p.id) })}>×</button>

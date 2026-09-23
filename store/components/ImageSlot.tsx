@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type DragEvent } from "react";
+import { useEffect, useRef, useState, type DragEvent } from "react";
 import { putImage, removeImage, useImage } from "@/lib/images";
 import { toast } from "@/lib/store";
 
@@ -14,6 +14,8 @@ interface Props {
   alt?: string;
   /** Pin the image to the top edge instead of centring it (garments: collar at the top). */
   anchorTop?: boolean;
+  /** Built-in image shown until someone uploads one to this slot. */
+  src?: string;
   /** Reports the loaded image's height / width, so a parent can size its box to it. */
   onAspect?: (ratio: number) => void;
   /** Transform an uploaded file before it is stored (e.g. background removal). */
@@ -27,8 +29,9 @@ const MAX_BYTES = 8 * 1024 * 1024;
  * striped placeholder when empty, and — when editable — accepts a dropped or
  * browsed image file. Wrap in `.ph` (and `.grayscale` for product photography).
  */
-export function ImageSlot({ id, placeholder = "", editable, fit = "cover", round, alt = "", anchorTop, process, onAspect }: Props) {
-  const url = useImage(id);
+export function ImageSlot({ id, placeholder = "", editable, fit = "cover", round, alt = "", anchorTop, process, onAspect, src }: Props) {
+  const uploaded = useImage(id);
+  const url = uploaded ?? src ?? null;
   const input = useRef<HTMLInputElement>(null);
   const [drag, setDrag] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -54,17 +57,22 @@ export function ImageSlot({ id, placeholder = "", editable, fit = "cover", round
     void accept(e.dataTransfer.files?.[0]);
   };
 
-  const onLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const i = e.currentTarget;
-    if (onAspect && i.naturalWidth) onAspect(i.naturalHeight / i.naturalWidth);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const report = (i: HTMLImageElement | null) => {
+    if (onAspect && i?.naturalWidth) onAspect(i.naturalHeight / i.naturalWidth);
   };
+  const onLoad = (e: React.SyntheticEvent<HTMLImageElement>) => report(e.currentTarget);
+  // A cached image can finish loading before hydration attaches onLoad; read it directly too.
+  useEffect(() => {
+    if (imgRef.current?.complete) report(imgRef.current);
+  });
 
   const cls = ["slot", fit === "contain" && "contain", anchorTop && "top", round && "round", editable && "edit", drag && "drag"].filter(Boolean).join(" ");
 
   if (!editable) {
     return (
       <span className={cls}>
-        {url ? <img src={url} alt={alt} draggable={false} onLoad={onLoad} /> : placeholder ? <span className="slot-empty">{placeholder}</span> : null}
+        {url ? <img ref={imgRef} src={url} alt={alt} draggable={false} onLoad={onLoad} /> : placeholder ? <span className="slot-empty">{placeholder}</span> : null}
       </span>
     );
   }
@@ -81,11 +89,11 @@ export function ImageSlot({ id, placeholder = "", editable, fit = "cover", round
       onDragLeave={() => setDrag(false)}
       onDrop={onDrop}
     >
-      {busy ? <span className="slot-empty">Removing background…</span> : url ? <img src={url} alt={alt} draggable={false} /> : <span className="slot-empty">{placeholder || "Drop image"}</span>}
+      {busy ? <span className="slot-empty">Removing background…</span> : url ? <img ref={imgRef} src={url} alt={alt} draggable={false} onLoad={onLoad} /> : <span className="slot-empty">{placeholder || "Drop image"}</span>}
       {url && (
         <span className="slot-tools" onClick={(e) => e.stopPropagation()}>
           <button type="button" onClick={() => input.current?.click()}>Replace</button>
-          <button type="button" onClick={() => void removeImage(id)}>Remove</button>
+          {uploaded && <button type="button" onClick={() => void removeImage(id)}>{src ? "Reset" : "Remove"}</button>}
         </span>
       )}
       <input
