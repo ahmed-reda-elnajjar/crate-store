@@ -20,6 +20,25 @@ const fitOf = (wear: WearSettings, id: string): WearFit =>
     ? (wear.alignedFits?.[id] ?? ALIGNED_FIT)
     : (wear.fits?.[id] ?? { topPct: wear.topPct, scalePct: wear.scalePct, xPct: wear.xPct });
 
+/** How far the fit can move, per mode. Aligned garments only need small nudges. */
+const rangeOf = (wear: WearSettings) =>
+  wear.aligned
+    ? { top: [-25, 25], scale: [60, 140], x: [-25, 25] }
+    : { top: [-10, 60], scale: [30, 180], x: [-40, 40] };
+
+const clamp = (v: number, [a, b]: number[]) => Math.round(Math.min(b, Math.max(a, v)) * 2) / 2;
+
+/** Saves a fit change for one garment into the draft, clamped to the mode's range. */
+function saveFit(wear: WearSettings, id: string, patch: Partial<WearFit>) {
+  const r = rangeOf(wear);
+  const key = wear.aligned ? "alignedFits" : "fits";
+  const next = { ...fitOf(wear, id), ...patch };
+  next.topPct = clamp(next.topPct, r.top);
+  next.scalePct = clamp(next.scalePct, r.scale);
+  next.xPct = clamp(next.xPct, r.x);
+  updateWear({ [key]: { ...wear[key], [id]: next } });
+}
+
 /** Background removal for the current mode: trimmed cut-outs, or full-canvas when aligned. */
 const cutterFor = (wear: WearSettings) => (file: Blob) => cutoutGarment(file, { trim: !wear.aligned });
 
@@ -69,6 +88,67 @@ export function WearCarousel({ wear, products, editable, standalone }: { wear: W
   // Swipe on touch screens.
   const swipe = useRef<number | null>(null);
 
+  // Admins move the garment by dragging it and resize it from the corner handle.
+  const drag = useRef<{ mode: "move" | "resize"; x: number; y: number; f: WearFit; id: string } | null>(null);
+  const [dragging, setDragging] = useState(false);
+  // Height/width of each trimmed cut-out, so its box (and resize handle) hugs the garment.
+  const [aspects, setAspects] = useState<Record<string, number>>({});
+  const startDrag = (e: React.PointerEvent, mode: "move" | "resize", id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    drag.current = { mode, x: e.clientX, y: e.clientY, f: fitOf(wear, id), id };
+    setDragging(true);
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  };
+  const moveDrag = (e: React.PointerEvent) => {
+    const d = drag.current;
+    if (!d) return;
+    const dx = e.clientX - d.x;
+    const dy = e.clientY - d.y;
+    if (d.mode === "move") {
+      saveFit(wear, d.id, { xPct: d.f.xPct + (dx / mw) * 100, topPct: d.f.topPct + (dy / mh) * 100 });
+    } else {
+      // The garment is centred, so a corner moved by dx changes the width by 2·dx.
+      const w0 = (mw * d.f.scalePct) / 100;
+      saveFit(wear, d.id, { scalePct: (d.f.scalePct * (w0 + 2 * dx)) / w0 });
+    }
+  };
+  const endDrag = () => {
+    drag.current = null;
+    setDragging(false);
+  };
+  const nudge = (e: React.KeyboardEvent, id: string) => {
+    const f = fitOf(wear, id);
+    const step = e.shiftKey ? 2 : 0.5;
+    const patch: Partial<WearFit> | null =
+      e.key === "ArrowLeft" ? { xPct: f.xPct - step } :
+      e.key === "ArrowRight" ? { xPct: f.xPct + step } :
+      e.key === "ArrowUp" ? { topPct: f.topPct - step } :
+      e.key === "ArrowDown" ? { topPct: f.topPct + step } :
+      e.key === "+" || e.key === "=" ? { scalePct: f.scalePct + step * 2 } :
+      e.key === "-" || e.key === "_" ? { scalePct: f.scalePct - step * 2 } : null;
+    if (!patch) return;
+    e.preventDefault();
+    saveFit(wear, id, patch);
+  };
+
+  // Mouse wheel over the garment resizes it (needs a non-passive listener to stop page scroll).
+  const stageRef = useRef<HTMLDivElement>(null);
+  const wheelTarget = useRef<{ wear: WearSettings; id?: string }>({ wear });
+  wheelTarget.current = { wear, id: editable ? G[idx]?.id : undefined };
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el || !editable) return;
+    const onWheel = (e: WheelEvent) => {
+      const { wear: w, id } = wheelTarget.current;
+      if (!id || !(e.target as HTMLElement).closest(".wear-edit")) return;
+      e.preventDefault();
+      saveFit(w, id, { scalePct: fitOf(w, id).scalePct + (e.deltaY < 0 ? 1 : -1) });
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [editable]);
+
   const [mw, mh, mTop, side] = mobile ? [280, 420, 16, 250] : [440, 660, 40, 420];
   const imgClass = wear.colorPhotos ? "" : "grayscale";
   const cur = G[idx];
@@ -81,24 +161,53 @@ export function WearCarousel({ wear, products, editable, standalone }: { wear: W
     // Trimmed cut-outs are pinned to the top of a tall box, so width sets the size
     // and the collar lands on the collar line. Aligned garments share the model
     // photo's canvas, so their box is the model frame itself.
-    const h = wear.aligned ? (mh * f.scalePct) / 100 : w * 1.4;
+    const h = wear.aligned ? (mh * f.scalePct) / 100 : w * Math.min(2, aspects[p.id] ?? 1.1);
     const cx = (f.xPct / 100) * mw;
+    const editing = editable && pos === 0;
     return (
       <div
         key={p.id}
-        className={`wear-layer ${imgClass}`}
+        className={`wear-layer ${imgClass} ${editing ? "wear-edit" : ""} ${editing && dragging ? "is-dragging" : ""}`}
         aria-hidden={pos !== 0}
+        {...(editing && {
+          tabIndex: 0,
+          role: "group",
+          "aria-label": `${p.name}: drag to move, drag the corner or scroll to resize, arrow keys to nudge`,
+          onPointerDown: (e: React.PointerEvent) => startDrag(e, "move", p.id),
+          onPointerMove: moveDrag,
+          onPointerUp: endDrag,
+          onPointerCancel: endDrag,
+          onKeyDown: (e: React.KeyboardEvent) => nudge(e, p.id),
+        })}
         style={{
           top: mTop + (mh * f.topPct) / 100, width: w, height: h, marginLeft: -w / 2 + cx,
           zIndex: pos === 0 ? 3 : 1,
           transform: `translateX(${pos * side}px) scale(${pos === 0 ? 1 : 0.82})`,
           opacity: pos === 0 ? 1 : Math.abs(pos) === 1 ? 0.28 : 0,
           filter: pos === 0 ? "none" : "blur(3px)",
-          pointerEvents: pos === 0 && editable ? "auto" : "none",
+          pointerEvents: editing ? "auto" : "none",
+          ...(editing && dragging ? { transition: "none" } : {}),
           ...(wear.aligned ? {} : neckMask(f.neck, w)),
         }}
       >
-        <ImageSlot id={wearImg(p.id)} fit="contain" anchorTop={!wear.aligned} process={cutterFor(wear)} placeholder={editable ? `garment photo ${i + 1}` : ""} editable={editable && pos === 0} alt={p.name} />
+        <ImageSlot
+          id={wearImg(p.id)}
+          fit="contain"
+          anchorTop={!wear.aligned}
+          placeholder={editable ? `garment photo ${i + 1}` : ""}
+          alt={p.name}
+          onAspect={(a) => setAspects((m) => (m[p.id] === a ? m : { ...m, [p.id]: a }))}
+        />
+        {editing && (
+          <span
+            className="wear-handle"
+            aria-hidden
+            onPointerDown={(e) => startDrag(e, "resize", p.id)}
+            onPointerMove={moveDrag}
+            onPointerUp={endDrag}
+            onPointerCancel={endDrag}
+          />
+        )}
       </div>
     );
   });
@@ -113,6 +222,7 @@ export function WearCarousel({ wear, products, editable, standalone }: { wear: W
         </div>
       )}
       <div
+        ref={stageRef}
         className="wear-stage"
         style={standalone || mobile ? undefined : { borderTop: "2px solid var(--color-divider)" }}
         onPointerDown={(e) => e.pointerType !== "mouse" && (swipe.current = e.clientX)}
@@ -177,10 +287,8 @@ function WearTools({ wear, products, garments, idx, onPick }: { wear: WearSettin
   const own = cur ? wear[key]?.[cur.id] : undefined;
   const [working, setWorking] = useState<string | null>(null);
 
-  const setFit = (patch: Partial<WearFit>) => {
-    if (!cur) return;
-    updateWear({ [key]: { ...wear[key], [cur.id]: { ...f, ...patch } } });
-  };
+  const r = rangeOf(wear);
+  const setFit = (patch: Partial<WearFit>) => cur && saveFit(wear, cur.id, patch);
   const applyToAll = () => updateWear({ [key]: Object.fromEntries(garments.map((g) => [g.id, f])) });
   const reset = () => {
     if (!cur || !wear[key]) return;
@@ -211,9 +319,10 @@ function WearTools({ wear, products, garments, idx, onPick }: { wear: WearSettin
           </select>
         </div>
         <div className="fit-for"><span className="label">Fit on photo</span><b>{cur?.name ?? "—"}</b></div>
-        <label className="slider"><span className="t"><span>{wear.aligned ? "Up / down" : "Collar position"}</span><b>{f.topPct}%</b></span><input type="range" min={wear.aligned ? -10 : 0} max={wear.aligned ? 10 : 45} step={0.5} value={f.topPct} onChange={(e) => setFit({ topPct: +e.target.value })} /></label>
-        <label className="slider"><span className="t"><span>{wear.aligned ? "Size" : "Garment width"}</span><b>{f.scalePct}%</b></span><input type="range" min={wear.aligned ? 85 : 40} max={wear.aligned ? 115 : 160} step={0.5} value={f.scalePct} onChange={(e) => setFit({ scalePct: +e.target.value })} /></label>
-        <label className="slider"><span className="t"><span>Side-to-side</span><b>{f.xPct}</b></span><input type="range" min={wear.aligned ? -10 : -30} max={wear.aligned ? 10 : 30} step={0.5} value={f.xPct} onChange={(e) => setFit({ xPct: +e.target.value })} /></label>
+        <span className="muted" style={{ fontSize: 12 }}>On the photo: drag the garment to move it, drag the red corner or scroll to resize. Arrow keys nudge, + and − resize (hold Shift for bigger steps).</span>
+        <label className="slider"><span className="t"><span>{wear.aligned ? "Up / down" : "Collar position"}</span><b>{f.topPct}%</b></span><input type="range" min={r.top[0]} max={r.top[1]} step={0.5} value={f.topPct} onChange={(e) => setFit({ topPct: +e.target.value })} /></label>
+        <label className="slider"><span className="t"><span>{wear.aligned ? "Size" : "Garment width"}</span><b>{f.scalePct}%</b></span><input type="range" min={r.scale[0]} max={r.scale[1]} step={0.5} value={f.scalePct} onChange={(e) => setFit({ scalePct: +e.target.value })} /></label>
+        <label className="slider"><span className="t"><span>Side-to-side</span><b>{f.xPct}</b></span><input type="range" min={r.x[0]} max={r.x[1]} step={0.5} value={f.xPct} onChange={(e) => setFit({ xPct: +e.target.value })} /></label>
         {!wear.aligned && (
           <label className="slider"><span className="t"><span>Neck opening</span><b>{f.neck ? `${f.neck}%` : "Off"}</b></span><input type="range" min={0} max={60} value={f.neck ?? 0} onChange={(e) => setFit({ neck: +e.target.value })} /></label>
         )}

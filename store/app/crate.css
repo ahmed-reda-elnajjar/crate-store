@@ -176,6 +176,10 @@ button { font: inherit; color: inherit; }
 .wear-dots { display: flex; gap: 4px; }
 .wear-dots button { all: unset; cursor: pointer; height: 3px; transition: width .4s; }
 .wear-layer { position: absolute; left: 50%; transition: transform .9s cubic-bezier(.7, 0, .2, 1), opacity .9s, filter .9s, top .3s, width .3s, height .3s, margin-left .3s; }
+.wear-edit { cursor: move; touch-action: none; outline: 1px dashed var(--color-accent); outline-offset: 0; }
+.wear-edit:focus-visible { outline: 2px solid var(--color-accent); }
+.wear-edit.is-dragging { cursor: grabbing; }
+.wear-handle { position: absolute; right: -7px; bottom: -7px; width: 14px; height: 14px; background: var(--color-accent); border: 2px solid var(--color-bg); cursor: nwse-resize; touch-action: none; z-index: 4; }
 .wear-tools { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); border-top: 2px solid var(--color-divider); }
 .wear-tools .fitbar { grid-column: span 4; padding: 16px 32px; display: flex; flex-direction: column; gap: 12px; border-right: 2px solid var(--color-divider); }
 .wear-tools .rot { grid-column: span 8; padding: 16px 32px; display: flex; flex-direction: column; gap: 10px; }

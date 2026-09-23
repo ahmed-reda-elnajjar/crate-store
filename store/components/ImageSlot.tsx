@@ -14,6 +14,8 @@ interface Props {
   alt?: string;
   /** Pin the image to the top edge instead of centring it (garments: collar at the top). */
   anchorTop?: boolean;
+  /** Reports the loaded image's height / width, so a parent can size its box to it. */
+  onAspect?: (ratio: number) => void;
   /** Transform an uploaded file before it is stored (e.g. background removal). */
   process?: (file: File) => Promise<Blob>;
 }
@@ -25,7 +27,7 @@ const MAX_BYTES = 8 * 1024 * 1024;
  * striped placeholder when empty, and — when editable — accepts a dropped or
  * browsed image file. Wrap in `.ph` (and `.grayscale` for product photography).
  */
-export function ImageSlot({ id, placeholder = "", editable, fit = "cover", round, alt = "", anchorTop, process }: Props) {
+export function ImageSlot({ id, placeholder = "", editable, fit = "cover", round, alt = "", anchorTop, process, onAspect }: Props) {
   const url = useImage(id);
   const input = useRef<HTMLInputElement>(null);
   const [drag, setDrag] = useState(false);
@@ -52,12 +54,17 @@ export function ImageSlot({ id, placeholder = "", editable, fit = "cover", round
     void accept(e.dataTransfer.files?.[0]);
   };
 
+  const onLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const i = e.currentTarget;
+    if (onAspect && i.naturalWidth) onAspect(i.naturalHeight / i.naturalWidth);
+  };
+
   const cls = ["slot", fit === "contain" && "contain", anchorTop && "top", round && "round", editable && "edit", drag && "drag"].filter(Boolean).join(" ");
 
   if (!editable) {
     return (
       <span className={cls}>
-        {url ? <img src={url} alt={alt} draggable={false} /> : placeholder ? <span className="slot-empty">{placeholder}</span> : null}
+        {url ? <img src={url} alt={alt} draggable={false} onLoad={onLoad} /> : placeholder ? <span className="slot-empty">{placeholder}</span> : null}
       </span>
     );
   }
