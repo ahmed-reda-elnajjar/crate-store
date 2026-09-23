@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas"><link rel="stylesheet" href="_ds/modernist-0de543be-f99e-4c64-9617-7b787e0564d5/styles.css"><script src="./image-slot.js"></script><style>body{margin:0;background:#dcdada}a{color:var(--color-text);text-decoration:none}a:hover{color:var(--color-accent)}.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08)}.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 12px}.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff}.dv-tname{font:600 13px/1.2 system-ui,sans-serif}.dv-screen{margin:48px 0 16px;font:800 28px/1 'Archivo',sans-serif;letter-spacing:-.02em}.dv-opts{display:flex;flex-wrap:wrap;gap:56px;align-items:flex-start}.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px}.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.1);color:#1a1a1a}.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 12px/1.3 system-ui,sans-serif;color:rgba(0,0,0,.6)}.dv-card{background:var(--color-bg);box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden;flex:none}.dv-next{margin:40px 0 0;font:12px/1.5 system-ui,sans-serif;color:rgba(0,0,0,.55)}</style></helmet>
+<section class="dv-turn" id="t5">
+<div class="dv-thd"><a class="dv-tid" href="#t5">5</a><span class="dv-tname">Wear carousel: one model photo, and the collection's garments rotate onto the upper body</span></div>
+<p style="margin:0;max-width:760px;font:13px/1.55 system-ui,sans-serif;color:rgba(0,0,0,.6)">Drop a full-body model photo in the centre, then drop each garment as a <b>cut-out PNG with a transparent background</b> into the slots below the stage. The garments cycle automatically: the centre one sits on the model from shoulders to waist, and the next and previous ones fade out to the sides. Use the fit bar to line the garment up with your photo.</p>
+<div class="dv-opts" style="margin-top:24px">
+
+<div class="dv-opt" id="5a"><div class="dv-olabel"><a class="dv-oid" href="#5a">5a</a>Desktop · collection hero</div>
+<div class="dv-card" style="width:1280px">
+<div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:18px 32px;border-bottom:2px solid var(--color-divider);font-size:14px"><div style="display:flex;gap:24px"><a href="#">Shop</a><a href="#">About</a></div><span style="font-weight:800;font-size:22px;letter-spacing:-.02em">CRATE</span><div style="display:flex;gap:24px;justify-content:flex-end"><a href="#">Search</a><a href="#">Bag (2)</a></div></div>
+<div style="position:relative;height:760px;overflow:hidden;background:var(--color-bg)">
+<div style="position:absolute;left:32px;top:220px;z-index:5;display:flex;flex-direction:column;gap:16px;max-width:320px;pointer-events:none"><span style="font-weight:800;font-size:72px;line-height:.86;letter-spacing:-.045em">THE JACKET COLLECTION</span><span style="font-size:15px">Designed for movement. Built for every moment.</span></div>
+<div class="{{ imgClass }}" style="position:absolute;left:50%;top:40px;width:440px;height:660px;margin-left:-220px;z-index:2;background:var(--color-surface)"><image-slot id="wear-model" shape="rect" fit="contain" placeholder="full-body model photo" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div>
+<sc-for list="{{ wearD }}" as="g" hint-placeholder-count="6">
+<div class="{{ imgClass }}" style="position:absolute;left:50%;top:{{ g.top }};width:{{ g.w }};height:{{ g.h }};margin-left:{{ g.ml }};z-index:{{ g.z }};transform:{{ g.tf }};opacity:{{ g.op }};filter:{{ g.blur }};transition:transform .9s cubic-bezier(.7,0,.2,1),opacity .9s,filter .9s,top .3s,width .3s,height .3s,margin-left .3s;pointer-events:{{ g.pe }}"><image-slot id="{{ g.id }}" shape="rect" fit="contain" placeholder="{{ g.ph }}" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div>
+</sc-for>
+<div style="position:absolute;right:32px;top:260px;z-index:5;display:flex;flex-direction:column;gap:8px;align-items:flex-start;width:220px"><span style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-accent-700);font-weight:600">Now wearing</span><span style="font-weight:800;font-size:26px;line-height:1;letter-spacing:-.02em">{{ curName }}</span><span style="font-size:15px">{{ curPrice }}</span><a href="#" class="btn btn-primary" style="height:44px;width:220px;padding:0 14px;justify-content:space-between;margin-top:8px"><span>Shop this piece</span><span>→</span></a></div>
+<div style="position:absolute;left:0;right:0;bottom:20px;z-index:5;display:flex;justify-content:center;align-items:center;gap:16px;font-size:13px">
+<button onClick="{{ wearPrev }}" class="btn btn-ghost" style="height:32px;padding:0 10px">←</button>
+<span style="font-weight:700">{{ wearCounter }}</span>
+<div style="display:flex;gap:4px"><sc-for list="{{ wearDots }}" as="d" hint-placeholder-count="6"><button onClick="{{ d.pick }}" style="all:unset;cursor:pointer;width:{{ d.w }};height:3px;background:{{ d.bg }};transition:width .4s"></button></sc-for></div>
+<button onClick="{{ wearNext }}" class="btn btn-ghost" style="height:32px;padding:0 10px">→</button>
+<button onClick="{{ wearToggle }}" class="btn btn-ghost" style="height:32px;padding:0 10px">{{ wearPlayLabel }}</button>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(12,1fr);border-top:2px solid var(--color-divider)">
+<div style="grid-column:span 4;padding:16px 32px;display:flex;flex-direction:column;gap:12px;border-right:2px solid var(--color-divider)"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700)">Fit on photo</span>
+<div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>Collar position</span><b>{{ wearTopPct }}%</b></div><input type="range" min="0" max="45" value="{{ wearTopPct }}" onChange="{{ onWearTop }}" style="width:100%;accent-color:var(--color-accent)"></div>
+<div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>Garment width</span><b>{{ wearScalePct }}%</b></div><input type="range" min="40" max="130" value="{{ wearScalePct }}" onChange="{{ onWearScale }}" style="width:100%;accent-color:var(--color-accent)"></div>
+<div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>Side-to-side</span><b>{{ wearXPct }}</b></div><input type="range" min="-30" max="30" value="{{ wearXPct }}" onChange="{{ onWearX }}" style="width:100%;accent-color:var(--color-accent)"></div>
+</div>
+<div style="grid-column:span 8;padding:16px 32px;display:flex;flex-direction:column;gap:10px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700)">Garments in rotation · transparent PNGs</span>
+<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:2px;background:var(--color-divider);border:2px solid var(--color-divider)"><sc-for list="{{ wearD }}" as="g" hint-placeholder-count="6"><div style="background:{{ g.cellBg }};padding:8px;display:flex;flex-direction:column;gap:6px"><div style="position:relative;aspect-ratio:1/1;background:var(--color-surface)"><image-slot id="{{ g.id }}" shape="rect" fit="contain" placeholder="drop PNG" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div><span style="font-size:12px;font-weight:600">{{ g.name }}</span></div></sc-for></div>
+</div>
+</div>
+</div></div>
+
+<div class="dv-opt" id="5b"><div class="dv-olabel"><a class="dv-oid" href="#5b">5b</a>Mobile · same carousel, swipe or auto</div>
+<div class="dv-card" style="width:390px;height:844px;display:flex;flex-direction:column">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:2px solid var(--color-divider);font-size:14px"><span>Menu</span><span style="font-weight:800;font-size:20px">CRATE</span><span>Bag 2</span></div>
+<div style="padding:16px 16px 0;display:flex;flex-direction:column;gap:6px"><span style="font-weight:800;font-size:44px;line-height:.86;letter-spacing:-.045em">THE JACKET COLLECTION</span></div>
+<div style="position:relative;flex:1;overflow:hidden">
+<div class="{{ imgClass }}" style="position:absolute;left:50%;top:16px;width:280px;height:420px;margin-left:-140px;z-index:2;background:var(--color-surface)"><image-slot id="wear-model" shape="rect" fit="contain" placeholder="model photo" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div>
+<sc-for list="{{ wearM }}" as="g" hint-placeholder-count="6">
+<div class="{{ imgClass }}" style="position:absolute;left:50%;top:{{ g.top }};width:{{ g.w }};height:{{ g.h }};margin-left:{{ g.ml }};z-index:{{ g.z }};transform:{{ g.tf }};opacity:{{ g.op }};filter:{{ g.blur }};transition:transform .9s cubic-bezier(.7,0,.2,1),opacity .9s,filter .9s;pointer-events:none"><image-slot id="{{ g.id }}" shape="rect" fit="contain" placeholder="" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div>
+</sc-for>
+<div style="position:absolute;left:0;right:0;bottom:12px;z-index:5;display:flex;justify-content:center;gap:12px;align-items:center;font-size:12px"><button onClick="{{ wearPrev }}" class="btn btn-ghost" style="height:44px;padding:0 12px">←</button><b>{{ wearCounter }}</b><button onClick="{{ wearNext }}" class="btn btn-ghost" style="height:44px;padding:0 12px">→</button></div>
+</div>
+<div style="border-top:2px solid var(--color-divider);padding:12px 16px 24px;display:flex;flex-direction:column;gap:10px"><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-weight:800;font-size:20px">{{ curName }}</span><span>{{ curPrice }}</span></div><a href="#" class="btn btn-primary" style="height:52px;padding:0 16px;justify-content:space-between;font-size:15px"><span>Shop this piece</span><span>→</span></a></div>
+</div></div>
+
+</div>
+</section>
+<section class="dv-turn" id="t4">
+<div class="dv-thd"><a class="dv-tid" href="#t4">4</a><span class="dv-tname">Sign in + roles: a customer browses and buys, an admin edits products, photos and site sections</span></div>
+<p style="margin:0;max-width:760px;font:13px/1.55 system-ui,sans-serif;color:rgba(0,0,0,.6)">This is interactive. Sign in on <a href="#4a">4a</a> as a customer or an admin, and <a href="#4b">4b</a> switches to that role's view. As admin you can drop photos onto any product, edit names and prices, add products, and show, hide or reorder homepage sections. Any edit shows up right away in the customer view.</p>
+<div class="dv-opts" style="margin-top:24px">
+
+<div class="dv-opt" id="4a"><div class="dv-olabel"><a class="dv-oid" href="#4a">4a</a>Sign in · desktop + mobile</div>
+<div style="display:flex;gap:24px;align-items:flex-start">
+<div class="dv-card" style="width:1280px;height:760px;display:grid;grid-template-columns:repeat(12,1fr)">
+<div style="grid-column:span 6;background:var(--color-accent);color:var(--color-bg);padding:32px;display:flex;flex-direction:column;justify-content:space-between"><span style="font-weight:800;font-size:22px">CRATE</span><div style="display:flex;flex-direction:column;gap:16px"><span style="font-weight:800;font-size:150px;line-height:.8;letter-spacing:-.06em">SIGN IN</span><span style="font-size:17px;font-weight:600;max-width:420px">Members get early access to drops, order tracking and a saved fit profile.</span></div></div>
+<div style="grid-column:span 6;padding:48px 64px;display:flex;flex-direction:column;justify-content:center;gap:20px">
+<div class="seg" style="align-self:flex-start"><label class="seg-opt"><input type="radio" name="auth4" checked=""><span>Sign in</span></label><label class="seg-opt"><input type="radio" name="auth4"><span>Create account</span></label></div>
+<div class="field"><label>Email</label><input class="input" value="{{ loginEmail }}" onChange="{{ onEmail }}" style="height:48px"></div>
+<div class="field"><div style="display:flex;justify-content:space-between"><label>Password</label><a href="#" style="font-size:13px;text-decoration:underline">Forgot?</a></div><input class="input" type="password" value="password" style="height:48px"></div>
+<button onClick="{{ signIn }}" class="btn btn-primary" style="height:56px;padding:0 20px;justify-content:space-between;font-size:16px"><span>Sign in</span><span>→</span></button>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><a href="#" class="btn btn-secondary" style="height:48px;justify-content:flex-start;padding:0 16px">Continue with Google</a><a href="#" class="btn btn-secondary" style="height:48px;justify-content:flex-start;padding:0 16px">Continue with Apple</a></div>
+<div style="border-top:2px solid var(--color-divider);padding-top:16px;display:flex;flex-direction:column;gap:10px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700)">Demo accounts</span>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--color-divider);border:2px solid var(--color-divider)">
+<button onClick="{{ asCustomer }}" style="all:unset;cursor:pointer;padding:12px 14px;display:flex;flex-direction:column;gap:2px;background:{{ custBg }};color:{{ custFg }}"><span style="font-weight:700;font-size:14px">Customer</span><span style="font-size:12px">sam@example.com</span></button>
+<button onClick="{{ asAdmin }}" style="all:unset;cursor:pointer;padding:12px 14px;display:flex;flex-direction:column;gap:2px;background:{{ admBg }};color:{{ admFg }}"><span style="font-weight:700;font-size:14px">Admin</span><span style="font-size:12px">admin@crate.store</span></button>
+</div>
+<span style="font-size:13px">Signed in as: <b>{{ roleLabel }}</b></span></div>
+</div>
+</div>
+<div class="dv-card" style="width:390px;height:844px;display:flex;flex-direction:column">
+<div style="background:var(--color-accent);color:var(--color-bg);padding:16px;height:260px;display:flex;flex-direction:column;justify-content:space-between"><span style="font-weight:800;font-size:20px">CRATE</span><span style="font-weight:800;font-size:84px;line-height:.8;letter-spacing:-.06em">SIGN IN</span></div>
+<div style="padding:20px 16px;display:flex;flex-direction:column;gap:14px">
+<div class="field"><label>Email</label><input class="input" value="{{ loginEmail }}" onChange="{{ onEmail }}" style="height:48px"></div>
+<div class="field"><label>Password</label><input class="input" type="password" value="password" style="height:48px"></div>
+<button onClick="{{ signIn }}" class="btn btn-primary" style="height:52px;padding:0 16px;justify-content:space-between;font-size:15px"><span>Sign in</span><span>→</span></button>
+<a href="#" class="btn btn-secondary" style="height:48px;justify-content:flex-start;padding:0 16px">Continue with Apple</a>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--color-divider);border:2px solid var(--color-divider);margin-top:8px">
+<button onClick="{{ asCustomer }}" style="all:unset;cursor:pointer;padding:12px;font-weight:700;font-size:13px;background:{{ custBg }};color:{{ custFg }}">Demo: Customer</button>
+<button onClick="{{ asAdmin }}" style="all:unset;cursor:pointer;padding:12px;font-weight:700;font-size:13px;background:{{ admBg }};color:{{ admFg }}">Demo: Admin</button>
+</div>
+<span style="font-size:13px">No account? <a href="#" style="text-decoration:underline">Create one</a></span>
+</div>
+</div>
+</div></div>
+
+<div class="dv-opt" id="4b"><div class="dv-olabel"><a class="dv-oid" href="#4b">4b</a>After sign-in · the view follows the role (currently {{ roleLabel }})</div>
+<div class="dv-card" style="width:1280px;min-height:820px;display:flex;flex-direction:column">
+
+<sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ false }}">
+<div style="background:var(--color-text);color:var(--color-bg);display:flex;justify-content:space-between;align-items:center;padding:10px 32px;font-size:13px"><div style="display:flex;gap:16px;align-items:center"><span style="background:var(--color-accent);padding:3px 8px;font-weight:700">ADMIN</span><span>Editing mode is on. Changes save as a draft until you publish.</span></div><div style="display:flex;gap:8px;align-items:center"><span>{{ draftNote }}</span><button onClick="{{ publish }}" class="btn btn-primary" style="height:32px;padding:0 12px">Publish</button><button onClick="{{ signOut }}" style="all:unset;cursor:pointer;padding:0 8px;text-decoration:underline">Sign out</button></div></div>
+<div style="display:grid;grid-template-columns:240px 1fr;flex:1">
+<div style="border-right:2px solid var(--color-divider);padding:24px 0;display:flex;flex-direction:column;font-size:15px">
+<span style="padding:0 24px 16px;font-weight:800;font-size:22px">CRATE Admin</span>
+<sc-for list="{{ adminTabs }}" as="t" hint-placeholder-count="4"><button onClick="{{ t.pick }}" style="all:unset;cursor:pointer;padding:12px 24px;display:flex;justify-content:space-between;background:{{ t.bg }};color:{{ t.fg }};font-weight:{{ t.fw }}"><span>{{ t.l }}</span><span style="font-size:12px">{{ t.n }}</span></button></sc-for>
+<button onClick="{{ previewStore }}" style="all:unset;cursor:pointer;margin:auto 24px 0;padding:10px 12px;border:2px solid var(--color-divider);font-size:13px">View as customer →</button>
+</div>
+
+<sc-if value="{{ tabProducts }}" hint-placeholder-val="{{ true }}">
+<div style="padding:24px 32px;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;justify-content:space-between;align-items:center"><h1 style="margin:0;font-size:40px;letter-spacing:-.03em">Products</h1><button onClick="{{ addProduct }}" class="btn btn-primary" style="height:44px;padding:0 16px;gap:24px"><span>Add product</span><span>+</span></button></div>
+<div style="display:grid;grid-template-columns:96px 1fr 140px 140px 120px 60px;padding:10px 0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);border-bottom:2px solid var(--color-divider)"><span>Photo</span><span>Name</span><span>Price</span><span>Stock</span><span>Status</span><span></span></div>
+<sc-for list="{{ adminProducts }}" as="p" hint-placeholder-count="5"><div style="display:grid;grid-template-columns:96px 1fr 140px 140px 120px 60px;align-items:center;padding:10px 0;border-bottom:1px solid var(--color-divider);gap:0">
+<div class="grayscale" style="position:relative;width:72px;height:90px;background:var(--color-surface);outline:2px dashed var(--color-neutral-400);outline-offset:-2px"><image-slot id="{{ p.imgId }}" shape="rect" placeholder="drop photo" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div>
+<input class="input" value="{{ p.name }}" onChange="{{ p.onName }}" style="height:40px;margin-right:16px;font-weight:600">
+<input class="input" value="{{ p.price }}" onChange="{{ p.onPrice }}" style="height:40px;width:110px">
+<input class="input" value="{{ p.stock }}" onChange="{{ p.onStock }}" style="height:40px;width:110px">
+<button onClick="{{ p.toggle }}" class="{{ p.tagClass }}" style="cursor:pointer;justify-self:start;border:0">{{ p.status }}</button>
+<button onClick="{{ p.remove }}" style="all:unset;cursor:pointer;font-size:13px;text-decoration:underline">Delete</button>
+</div></sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ tabSite }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:1fr 420px">
+<div style="padding:24px 32px;display:flex;flex-direction:column;gap:16px;border-right:2px solid var(--color-divider)">
+<h1 style="margin:0;font-size:40px;letter-spacing:-.03em">Homepage sections</h1>
+<span style="font-size:14px;color:var(--color-neutral-700)">Show, hide and reorder the blocks customers see on the home page.</span>
+<div style="border-top:2px solid var(--color-divider)"><sc-for list="{{ sectionRows }}" as="s" hint-placeholder-count="5"><div style="display:grid;grid-template-columns:40px 1fr auto auto;gap:16px;align-items:center;padding:14px 0;border-bottom:1px solid var(--color-divider);opacity:{{ s.op }}"><span style="font-weight:800;font-size:20px;color:var(--color-accent)">{{ s.no }}</span><div style="display:flex;flex-direction:column"><span style="font-weight:700;font-size:16px">{{ s.l }}</span><span style="font-size:12px;color:var(--color-neutral-700)">{{ s.d }}</span></div><div style="display:flex;gap:2px"><button onClick="{{ s.up }}" class="btn btn-secondary" style="height:32px;padding:0 10px">↑</button><button onClick="{{ s.down }}" class="btn btn-secondary" style="height:32px;padding:0 10px">↓</button></div><button onClick="{{ s.toggle }}" class="btn" style="height:32px;padding:0 12px;width:84px;background:{{ s.bg }};color:{{ s.fg }}">{{ s.state }}</button></div></sc-for></div>
+</div>
+<div style="padding:24px;display:flex;flex-direction:column;gap:14px">
+<span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700)">Hero block</span>
+<div class="grayscale" style="position:relative;height:200px;background:var(--color-surface);outline:2px dashed var(--color-neutral-400);outline-offset:-2px"><image-slot id="h2a-hero" shape="rect" placeholder="drop hero image" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div>
+<div class="field"><label>Headline</label><input class="input" value="{{ heroTitle }}" onChange="{{ onHero }}" style="height:44px"></div>
+<div class="field"><label>Kicker</label><input class="input" value="{{ heroKicker }}" onChange="{{ onKicker }}" style="height:44px"></div>
+<div class="field"><label>Button label</label><input class="input" value="{{ heroCta }}" onChange="{{ onCta }}" style="height:44px"></div>
+<span style="font-size:12px;color:var(--color-neutral-700)">This hero image is the same slot used on the home page (<a href="#2a" style="text-decoration:underline">2a</a>).</span>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ tabOrders }}" hint-placeholder-val="{{ false }}">
+<div style="padding:24px 32px;display:flex;flex-direction:column;gap:16px"><h1 style="margin:0;font-size:40px;letter-spacing:-.03em">Orders</h1>
+<table class="table" style="font-size:15px"><thead><tr><th>Order</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th></tr></thead><tbody><sc-for list="{{ orders }}" as="o" hint-placeholder-count="4"><tr><td style="padding:14px 8px;font-weight:600">{{ o.no }}</td><td style="padding:14px 8px">{{ o.date }}</td><td style="padding:14px 8px">{{ o.items }}</td><td style="padding:14px 8px">{{ o.total }}</td><td style="padding:14px 8px"><span class="{{ o.tagClass }}">{{ o.status }}</span></td></tr></sc-for></tbody></table></div>
+</sc-if>
+
+<sc-if value="{{ tabUsers }}" hint-placeholder-val="{{ false }}">
+<div style="padding:24px 32px;display:flex;flex-direction:column;gap:16px"><h1 style="margin:0;font-size:40px;letter-spacing:-.03em">Users &amp; roles</h1>
+<div style="border-top:2px solid var(--color-divider)"><sc-for list="{{ users }}" as="u" hint-placeholder-count="3"><div style="display:grid;grid-template-columns:1fr 1fr 160px;align-items:center;padding:14px 0;border-bottom:1px solid var(--color-divider);font-size:15px"><b>{{ u.name }}</b><span>{{ u.email }}</span><span class="{{ u.cls }}" style="justify-self:start">{{ u.role }}</span></div></sc-for></div>
+<span style="font-size:13px;color:var(--color-neutral-700)">Admins can edit products, photos and site sections. Customers can browse, buy and manage their own orders.</span></div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ isShopper }}" hint-placeholder-val="{{ true }}">
+<div style="display:grid;grid-template-columns:auto 1fr auto;gap:48px;align-items:center;padding:18px 32px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:22px;letter-spacing:-.02em">CRATE</span><div style="display:flex;gap:24px"><a href="#">New</a><a href="#">Tops</a><a href="#">Bottoms</a><a href="#">Outerwear</a></div><div style="display:flex;gap:20px;align-items:center"><span>{{ shopperGreeting }}</span><span>Bag ({{ bagCount }})</span><button onClick="{{ signOut }}" style="all:unset;cursor:pointer;text-decoration:underline">{{ authAction }}</button></div></div>
+<sc-if value="{{ previewing }}" hint-placeholder-val="{{ false }}"><div style="background:var(--color-accent-100);color:var(--color-accent-800);padding:10px 32px;font-size:13px;display:flex;justify-content:space-between"><span>Admin preview: this is what customers see.</span><button onClick="{{ backToAdmin }}" style="all:unset;cursor:pointer;text-decoration:underline;font-weight:600">Back to admin</button></div></sc-if>
+<sc-for list="{{ liveSections }}" as="sec" hint-placeholder-count="2">
+<sc-if value="{{ sec.isHero }}" hint-placeholder-val="{{ false }}"><div style="display:grid;grid-template-columns:repeat(12,1fr);border-bottom:2px solid var(--color-divider)"><div class="grayscale" style="grid-column:span 7;position:relative;height:380px;border-right:2px solid var(--color-divider)"><image-slot id="h2a-hero" shape="rect" placeholder="campaign image" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div><div style="grid-column:span 5;padding:32px;display:flex;flex-direction:column;justify-content:space-between"><span style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-accent-700);font-weight:600">{{ heroKicker }}</span><div style="display:flex;flex-direction:column;gap:20px;align-items:flex-start"><h1 style="font-size:72px;line-height:.88;letter-spacing:-.045em;margin:0">{{ heroTitle }}</h1><a href="#" class="btn btn-primary" style="height:52px;padding:0 20px;width:280px;justify-content:space-between;font-size:15px"><span>{{ heroCta }}</span><span>→</span></a></div></div></div></sc-if>
+<sc-if value="{{ sec.isCountdown }}" hint-placeholder-val="{{ false }}"><div style="background:var(--color-accent);color:var(--color-bg);padding:20px 32px;display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--color-divider)"><span style="font-weight:800;font-size:48px;letter-spacing:-.04em">DROP 08 · 02D 14H 22M</span><span style="font-size:15px;font-weight:600">Fri 26.09, 10:00 CET</span></div></sc-if>
+<sc-if value="{{ sec.isGrid }}" hint-placeholder-val="{{ true }}"><div><div style="display:flex;justify-content:space-between;align-items:baseline;padding:24px 32px 14px"><h2 style="margin:0;font-size:30px">Latest</h2><span style="font-size:14px">{{ liveCount }} pieces</span></div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--color-divider);border-top:2px solid var(--color-divider);border-bottom:2px solid var(--color-divider)"><sc-for list="{{ shopProducts }}" as="p" hint-placeholder-count="4"><div style="background:var(--color-bg);padding:16px;display:flex;flex-direction:column;gap:10px"><div class="grayscale" style="position:relative;aspect-ratio:4/5;background:var(--color-surface)"><image-slot id="{{ p.imgId }}" shape="rect" placeholder="product shot" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div><div style="display:flex;justify-content:space-between;font-size:14px;gap:8px"><span style="font-weight:600">{{ p.name }}</span><span>{{ p.price }}</span></div><button onClick="{{ p.add }}" class="btn btn-secondary" style="height:40px;padding:0 12px;justify-content:space-between"><span>{{ p.addLabel }}</span><span>+</span></button></div></sc-for></div></div></sc-if>
+<sc-if value="{{ sec.isCats }}" hint-placeholder-val="{{ false }}"><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--color-divider);border-bottom:2px solid var(--color-divider)"><sc-for list="{{ cats }}" as="c" hint-placeholder-count="4"><a href="#" style="background:var(--color-bg);padding:20px 32px;display:flex;justify-content:space-between;align-items:baseline"><span style="font-weight:800;font-size:26px">{{ c.name }}</span><span style="font-size:13px">{{ c.count }}</span></a></sc-for></div></sc-if>
+<sc-if value="{{ sec.isNews }}" hint-placeholder-val="{{ false }}"><div style="background:var(--color-text);color:var(--color-bg);padding:28px 32px;display:flex;justify-content:space-between;align-items:center"><span style="font-weight:800;font-size:28px">Get drop alerts first.</span><span style="font-size:15px;border-bottom:2px solid var(--color-bg);padding-bottom:6px;width:360px;display:flex;justify-content:space-between"><span>Email address</span><span>→</span></span></div></sc-if>
+</sc-for>
+</sc-if>
+</div></div>
+
+</div>
+</section>
+<section class="dv-turn" id="t3">
+<div class="dv-thd"><a class="dv-tid" href="#t3">3</a><span class="dv-tname">Size guide + 3D fit room, opened from the size picker on the product page (<a href="#2e">2e</a> / <a href="#2f">2f</a>)</span></div>
+<p style="margin:0;max-width:760px;font:13px/1.55 system-ui,sans-serif;color:rgba(0,0,0,.6)">This is interactive. Set your height and weight, drop a face photo, then pick a garment and a size. The avatar resizes to match, the garment fits tighter or looser, and each body zone reports its fit. The avatar is a placeholder drawing that stands in for the real 3D render.</p>
+<div class="dv-opts" style="margin-top:24px">
+
+<div class="dv-opt" id="3a"><div class="dv-olabel"><a class="dv-oid" href="#3a">3a</a>Desktop · Fit room modal</div>
+<div class="dv-card" style="width:1280px;height:880px;position:relative;background:var(--color-surface)">
+<div style="position:absolute;inset:0;background:color-mix(in srgb, var(--color-neutral-900) 55%, transparent)"></div>
+<div style="position:absolute;top:32px;left:80px;right:80px;bottom:32px;background:var(--color-bg);display:flex;flex-direction:column;box-shadow:var(--shadow-lg)">
+<div style="display:grid;grid-template-columns:1fr 1fr auto;border-bottom:2px solid var(--color-divider)">
+<button onClick="{{ tabGuide }}" style="all:unset;cursor:pointer;padding:18px 28px;font:800 20px var(--font-heading);letter-spacing:-.01em;background:{{ guideBg }};color:{{ guideFg }};border-right:2px solid var(--color-divider)">01 Size guide</button>
+<button onClick="{{ tabFit }}" style="all:unset;cursor:pointer;padding:18px 28px;font:800 20px var(--font-heading);letter-spacing:-.01em;background:{{ fitBg }};color:{{ fitFg }};border-right:2px solid var(--color-divider)">02 Try it on in 3D</button>
+<span style="padding:18px 28px;font-size:15px;display:flex;align-items:center">Close ×</span>
+</div>
+
+<sc-if value="{{ isFit }}" hint-placeholder-val="{{ true }}">
+<div style="display:grid;grid-template-columns:repeat(12,1fr);flex:1;min-height:0">
+<div style="grid-column:span 4;border-right:2px solid var(--color-divider);display:flex;flex-direction:column;overflow:hidden">
+<div style="padding:20px 24px;border-bottom:2px solid var(--color-divider);display:flex;flex-direction:column;gap:14px">
+<span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700)">Your body</span>
+<div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between;font-size:14px"><span>Height</span><b>{{ h }} cm</b></div><input type="range" min="150" max="200" value="{{ h }}" onChange="{{ onH }}" style="width:100%;accent-color:var(--color-accent)"></div>
+<div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between;font-size:14px"><span>Weight</span><b>{{ w }} kg</b></div><input type="range" min="45" max="130" value="{{ w }}" onChange="{{ onW }}" style="width:100%;accent-color:var(--color-accent)"></div>
+<div style="display:grid;grid-template-columns:64px 1fr;gap:14px;align-items:center"><div style="width:64px;height:64px;position:relative"><image-slot id="fit-face" shape="circle" placeholder="face" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:600">Face photo</span><span style="font-size:12px;color:var(--color-neutral-700)">Front-facing and well lit. It is only used on your avatar.</span></div></div>
+</div>
+<div style="padding:20px 24px;border-bottom:2px solid var(--color-divider);display:flex;flex-direction:column;gap:10px">
+<span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700)">Garment</span>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--color-divider);border:2px solid var(--color-divider)">
+<sc-for list="{{ garments }}" as="g" hint-placeholder-count="4"><button onClick="{{ g.pick }}" style="all:unset;cursor:pointer;padding:10px 12px;display:flex;flex-direction:column;gap:2px;background:{{ g.bg }};color:{{ g.fg }}"><span style="font-weight:600;font-size:13px">{{ g.name }}</span><span style="font-size:12px">{{ g.price }}</span></button></sc-for>
+</div>
+</div>
+<div style="padding:20px 24px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;justify-content:space-between;font-size:11px;letter-spacing:.08em;text-transform:uppercase"><span style="color:var(--color-neutral-700)">Size</span><span style="color:var(--color-accent-700);font-weight:600">We recommend {{ recLabel }}</span></div>
+<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:2px;background:var(--color-divider);border:2px solid var(--color-divider)">
+<sc-for list="{{ sizeBtns }}" as="s" hint-placeholder-count="6"><button onClick="{{ s.pick }}" style="all:unset;cursor:pointer;height:44px;display:flex;flex-direction:column;justify-content:center;padding:0 8px;font-weight:700;font-size:14px;background:{{ s.bg }};color:{{ s.fg }}"><span>{{ s.l }}</span><span style="font-size:9px;font-weight:600;letter-spacing:.04em">{{ s.mark }}</span></button></sc-for>
+</div>
+</div>
+</div>
+
+<div style="grid-column:span 5;position:relative;border-right:2px solid var(--color-divider);background:linear-gradient(var(--color-bg),var(--color-surface));overflow:hidden">
+<div style="position:absolute;inset:0;background-image:linear-gradient(var(--color-neutral-200) 1px,transparent 1px),linear-gradient(90deg,var(--color-neutral-200) 1px,transparent 1px);background-size:40px 40px;opacity:.6"></div>
+<div style="position:absolute;top:16px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:center">
+<div style="display:flex;gap:2px;background:var(--color-divider);border:2px solid var(--color-divider)"><sc-for list="{{ views }}" as="v" hint-placeholder-count="3"><button onClick="{{ v.pick }}" style="all:unset;cursor:pointer;padding:6px 12px;font-size:13px;background:{{ v.bg }};color:{{ v.fg }}">{{ v.l }}</button></sc-for></div>
+<span style="font-size:12px;color:var(--color-neutral-700)">Drag to rotate · 360°</span>
+</div>
+<div style="position:absolute;left:50%;top:64px;width:272px;height:600px;margin-left:-136px">
+<svg viewBox="0 0 200 440" width="272" height="600" style="display:block;overflow:visible">
+<ellipse cx="100" cy="428" rx="{{ shadowRx }}" ry="7" fill="var(--color-neutral-300)"></ellipse>
+<circle cx="100" cy="38" r="22" fill="var(--color-neutral-200)" stroke="var(--color-neutral-500)" stroke-width="1.5"></circle>
+<g transform="{{ bodyT }}">
+<rect x="92" y="58" width="16" height="20" fill="var(--color-neutral-200)" stroke="var(--color-neutral-500)" stroke-width="1.5" vector-effect="non-scaling-stroke"></rect>
+<path d="M62 84 C48 88 44 104 44 120 L38 240 L50 242 L60 130 Z M138 84 C152 88 156 104 156 120 L162 240 L150 242 L140 130 Z" fill="var(--color-neutral-200)" stroke="var(--color-neutral-500)" stroke-width="1.5" vector-effect="non-scaling-stroke"></path>
+<path d="M64 205 L68 420 L94 420 L99 225 L101 225 L106 420 L132 420 L136 205 Z" fill="var(--color-neutral-200)" stroke="var(--color-neutral-500)" stroke-width="1.5" vector-effect="non-scaling-stroke"></path>
+<path d="M60 82 Q100 70 140 82 L134 170 Q132 190 136 205 L64 205 Q68 190 66 170 Z" fill="var(--color-neutral-200)" stroke="var(--color-neutral-500)" stroke-width="1.5" vector-effect="non-scaling-stroke"></path>
+<g transform="{{ garmentT }}"><path d="{{ gPath }}" fill="{{ gFill }}" stroke="var(--color-text)" stroke-width="1.5" vector-effect="non-scaling-stroke"></path><path d="{{ gDetail }}" fill="none" stroke="{{ gDetailStroke }}" stroke-width="1.5" vector-effect="non-scaling-stroke"></path></g>
+</g>
+</svg>
+<sc-if value="{{ showFace }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;left:106px;top:22px;width:60px;height:60px"><image-slot id="fit-face" shape="circle" placeholder="" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div></sc-if>
+</div>
+<div style="position:absolute;left:16px;bottom:16px;background:var(--color-bg);border:2px solid var(--color-divider);padding:8px 12px;font-size:13px;display:flex;gap:10px"><b>{{ gName }} · {{ sizeLabel }}</b><span style="color:var(--color-neutral-700)">on {{ h }} cm / {{ w }} kg</span></div>
+</div>
+
+<div style="grid-column:span 3;display:flex;flex-direction:column">
+<div style="background:{{ verdictBg }};color:{{ verdictFg }};padding:20px 24px;display:flex;flex-direction:column;gap:4px"><span style="font-size:13px;font-weight:600">Overall fit</span><span style="font-weight:800;font-size:40px;line-height:.95;letter-spacing:-.03em">{{ verdict }}</span></div>
+<div style="display:flex;flex-direction:column">
+<sc-for list="{{ zones }}" as="z" hint-placeholder-count="4"><div style="display:flex;flex-direction:column;gap:8px;padding:14px 24px;border-bottom:1px solid var(--color-divider)"><div style="display:flex;justify-content:space-between;font-size:14px"><span>{{ z.k }}</span><b>{{ z.v }}</b></div><div style="display:grid;grid-template-columns:repeat(5,1fr);gap:2px"><sc-for list="{{ z.bar }}" as="b"><span style="height:6px;background:{{ b }}"></span></sc-for></div></div></sc-for>
+</div>
+<div style="font-size:12px;color:var(--color-neutral-700);padding:14px 24px">Scale: tight ← → loose. The estimate uses your height and weight.</div>
+<div style="margin-top:auto;padding:20px 24px;border-top:2px solid var(--color-divider);display:flex;flex-direction:column;gap:8px">
+<a href="#" class="btn btn-primary" style="height:56px;padding:0 18px;justify-content:space-between;font-size:15px"><span>Add {{ sizeLabel }} to bag</span><span>→</span></a>
+<button onClick="{{ useRec }}" class="btn btn-secondary" style="height:44px;padding:0 18px;justify-content:space-between"><span>Use recommended ({{ recLabel }})</span><span>↺</span></button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isGuide }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:repeat(12,1fr);flex:1;min-height:0">
+<div style="grid-column:span 5;border-right:2px solid var(--color-divider);position:relative;padding:24px">
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700)">Stretch</span>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;font-size:13px"><span style="border-top:4px solid var(--color-neutral-300);padding-top:6px">None</span><span style="border-top:4px solid var(--color-text);padding-top:6px;font-weight:600">Slight</span><span style="border-top:4px solid var(--color-neutral-300);padding-top:6px">Medium</span><span style="border-top:4px solid var(--color-neutral-300);padding-top:6px">High</span></div></div>
+<div style="position:relative;width:260px;height:572px;margin:20px 0 0 110px;transform:scale(.9);transform-origin:top left">
+<svg viewBox="0 0 200 440" width="260" height="572" style="display:block;overflow:visible">
+<circle cx="100" cy="38" r="22" fill="none" stroke="var(--color-neutral-500)" stroke-width="1.5"></circle>
+<path d="M92 58 L92 76 M108 58 L108 76 M62 84 C48 88 44 104 44 120 L38 240 L50 242 L60 130 M138 84 C152 88 156 104 156 120 L162 240 L150 242 L140 130 M64 205 L68 420 L94 420 L99 225 L101 225 L106 420 L132 420 L136 205 M60 82 Q100 70 140 82 L134 170 Q132 190 136 205 L64 205 Q68 190 66 170 Z" fill="none" stroke="var(--color-neutral-500)" stroke-width="1.5"></path>
+<ellipse cx="100" cy="108" rx="44" ry="7" fill="none" stroke="var(--color-accent)" stroke-width="3"></ellipse>
+<ellipse cx="100" cy="165" rx="36" ry="6" fill="none" stroke="var(--color-accent)" stroke-width="3"></ellipse>
+<line x1="180" y1="16" x2="180" y2="420" stroke="var(--color-accent)" stroke-width="3"></line>
+</svg>
+<span style="position:absolute;left:-100px;top:128px;background:var(--color-bg);border:2px solid var(--color-accent);padding:3px 8px;font-size:13px;font-weight:700">Chest {{ row.bust }}</span>
+<span style="position:absolute;left:-100px;top:202px;background:var(--color-bg);border:2px solid var(--color-accent);padding:3px 8px;font-size:13px;font-weight:700">Waist {{ row.waist }}</span>
+<span style="position:absolute;left:200px;top:280px;background:var(--color-bg);border:2px solid var(--color-accent);padding:3px 8px;font-size:13px;font-weight:700">{{ row.height }}</span>
+</div>
+</div>
+<div style="grid-column:span 7;padding:24px;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;justify-content:space-between;align-items:center"><div class="seg"><label class="seg-opt"><input type="radio" name="chart3" checked=""><span>Body chart</span></label><label class="seg-opt"><input type="radio" name="chart3"><span>Product chart</span></label></div><span style="font-size:13px">Units: cm · EU</span></div>
+<div style="border:2px solid var(--color-divider)">
+<div style="display:grid;grid-template-columns:repeat(5,1fr);background:var(--color-text);color:var(--color-bg);font-size:12px;letter-spacing:.06em;text-transform:uppercase"><span style="padding:12px 16px">Size</span><span style="padding:12px 16px">EU</span><span style="padding:12px 16px">Chest</span><span style="padding:12px 16px">Waist</span><span style="padding:12px 16px">Height</span></div>
+<sc-for list="{{ chartRows }}" as="r" hint-placeholder-count="6"><button onClick="{{ r.pick }}" style="all:unset;cursor:pointer;display:grid;grid-template-columns:repeat(5,1fr);width:100%;font-size:15px;border-top:1px solid var(--color-divider);background:{{ r.bg }};color:{{ r.fg }}"><span style="padding:12px 16px;font-weight:800">{{ r.size }}</span><span style="padding:12px 16px">{{ r.eu }}</span><span style="padding:12px 16px">{{ r.bust }}</span><span style="padding:12px 16px">{{ r.waist }}</span><span style="padding:12px 16px">{{ r.height }}</span></button></sc-for>
+</div>
+<div style="display:grid;grid-template-columns:64px 1fr;gap:16px;align-items:center;padding:16px;background:var(--color-surface)"><div class="grayscale" style="position:relative;width:64px;height:64px"><image-slot id="fit-model" shape="circle" placeholder="model" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div><div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:15px;font-weight:600">Model wears M · True to size</span><span style="font-size:13px;color:var(--color-neutral-700)">Height 188 cm · Chest 98 cm · Waist 82 cm</span></div></div>
+<button onClick="{{ tabFit }}" class="btn btn-primary" style="height:52px;padding:0 18px;justify-content:space-between;font-size:15px;margin-top:auto"><span>Not sure? Try it on in 3D</span><span>→</span></button>
+</div>
+</div>
+</sc-if>
+</div>
+</div></div>
+
+<div class="dv-opt" id="3b"><div class="dv-olabel"><a class="dv-oid" href="#3b">3b</a>Mobile · Fit room sheet (shares state with 3a)</div>
+<div class="dv-card" style="width:390px;height:844px;position:relative;display:flex;flex-direction:column">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:18px">Try it on in 3D</span><span>Close ×</span></div>
+<div style="position:relative;height:380px;border-bottom:2px solid var(--color-divider);background:linear-gradient(var(--color-bg),var(--color-surface));overflow:hidden">
+<div style="position:absolute;inset:0;background-image:linear-gradient(var(--color-neutral-200) 1px,transparent 1px),linear-gradient(90deg,var(--color-neutral-200) 1px,transparent 1px);background-size:32px 32px;opacity:.6"></div>
+<div style="position:absolute;left:50%;top:14px;width:160px;height:352px;margin-left:-80px">
+<svg viewBox="0 0 200 440" width="160" height="352" style="display:block;overflow:visible">
+<ellipse cx="100" cy="428" rx="{{ shadowRx }}" ry="7" fill="var(--color-neutral-300)"></ellipse>
+<circle cx="100" cy="38" r="22" fill="var(--color-neutral-200)" stroke="var(--color-neutral-500)" stroke-width="1.5"></circle>
+<g transform="{{ bodyT }}">
+<rect x="92" y="58" width="16" height="20" fill="var(--color-neutral-200)" stroke="var(--color-neutral-500)" stroke-width="1.5" vector-effect="non-scaling-stroke"></rect>
+<path d="M62 84 C48 88 44 104 44 120 L38 240 L50 242 L60 130 Z M138 84 C152 88 156 104 156 120 L162 240 L150 242 L140 130 Z" fill="var(--color-neutral-200)" stroke="var(--color-neutral-500)" stroke-width="1.5" vector-effect="non-scaling-stroke"></path>
+<path d="M64 205 L68 420 L94 420 L99 225 L101 225 L106 420 L132 420 L136 205 Z" fill="var(--color-neutral-200)" stroke="var(--color-neutral-500)" stroke-width="1.5" vector-effect="non-scaling-stroke"></path>
+<path d="M60 82 Q100 70 140 82 L134 170 Q132 190 136 205 L64 205 Q68 190 66 170 Z" fill="var(--color-neutral-200)" stroke="var(--color-neutral-500)" stroke-width="1.5" vector-effect="non-scaling-stroke"></path>
+<g transform="{{ garmentT }}"><path d="{{ gPath }}" fill="{{ gFill }}" stroke="var(--color-text)" stroke-width="1.5" vector-effect="non-scaling-stroke"></path><path d="{{ gDetail }}" fill="none" stroke="{{ gDetailStroke }}" stroke-width="1.5" vector-effect="non-scaling-stroke"></path></g>
+</g>
+</svg>
+<sc-if value="{{ showFace }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;left:62px;top:13px;width:36px;height:36px"><image-slot id="fit-face" shape="circle" placeholder="" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div></sc-if>
+</div>
+<div style="position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:2px;background:var(--color-divider);border:2px solid var(--color-divider)"><sc-for list="{{ views }}" as="v" hint-placeholder-count="3"><button onClick="{{ v.pick }}" style="all:unset;cursor:pointer;padding:6px 10px;font-size:12px;background:{{ v.bg }};color:{{ v.fg }}">{{ v.l }}</button></sc-for></div>
+<div style="position:absolute;right:10px;top:10px;background:{{ verdictBg }};color:{{ verdictFg }};padding:6px 10px;font-weight:800;font-size:14px">{{ verdict }}</div>
+</div>
+<div style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--color-divider);border-bottom:2px solid var(--color-divider)">
+<div style="background:var(--color-bg);padding:10px 14px;display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>Height</span><b>{{ h }} cm</b></div><input type="range" min="150" max="200" value="{{ h }}" onChange="{{ onH }}" style="width:100%;accent-color:var(--color-accent)"></div>
+<div style="background:var(--color-bg);padding:10px 14px;display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>Weight</span><b>{{ w }} kg</b></div><input type="range" min="45" max="130" value="{{ w }}" onChange="{{ onW }}" style="width:100%;accent-color:var(--color-accent)"></div>
+</div>
+<div style="display:flex;gap:6px;padding:10px 14px;overflow:hidden;border-bottom:2px solid var(--color-divider)"><sc-for list="{{ garments }}" as="g" hint-placeholder-count="4"><button onClick="{{ g.pick }}" style="all:unset;cursor:pointer;flex:none;padding:8px 10px;font-size:12px;font-weight:600;background:{{ g.bg }};color:{{ g.fg }};border:1px solid var(--color-divider)">{{ g.short }}</button></sc-for></div>
+<div style="padding:10px 14px;display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;justify-content:space-between;font-size:12px"><span>Size</span><span style="color:var(--color-accent-700);font-weight:600">We recommend {{ recLabel }}</span></div>
+<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:2px;background:var(--color-divider);border:2px solid var(--color-divider)"><sc-for list="{{ sizeBtns }}" as="s" hint-placeholder-count="6"><button onClick="{{ s.pick }}" style="all:unset;cursor:pointer;height:44px;display:flex;align-items:center;justify-content:flex-start;padding:0 8px;font-weight:700;font-size:13px;background:{{ s.bg }};color:{{ s.fg }}">{{ s.l }}</button></sc-for></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:12px"><sc-for list="{{ zones }}" as="z" hint-placeholder-count="4"><div style="display:flex;justify-content:space-between"><span style="color:var(--color-neutral-700)">{{ z.k }}</span><b>{{ z.v }}</b></div></sc-for></div>
+</div>
+</div>
+<div style="padding:10px 16px 24px;border-top:2px solid var(--color-divider)"><a href="#" class="btn btn-primary" style="height:52px;padding:0 16px;justify-content:space-between;font-size:15px;width:100%"><span>Add {{ sizeLabel }} to bag</span><span>→</span></a></div>
+</div></div>
+
+</div>
+</section>
+<section class="dv-turn" id="t2">
+<div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Crate on the Modernist system: 7 screens, 2 directions each, desktop (1280) and mobile (390)</span></div>
+<p style="margin:0;max-width:760px;font:13px/1.55 system-ui,sans-serif;color:rgba(0,0,0,.6)">Positioning is streetwear, built around limited drops. Direction one is <b>Grid</b>, where the visible modular grid and 2px rules organise the page. Direction two is <b>Poster</b>, with red fields, oversized Archivo and drop urgency. Every photo slot is a drop target and prints in grayscale.</p>
+
+<div class="dv-screen">01 Home</div>
+<div class="dv-opts">
+<div class="dv-opt" id="2a"><div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Home · Grid</div>
+<div style="display:flex;gap:24px;align-items:flex-start">
+<div class="dv-card" style="width:1280px">
+<div style="display:grid;grid-template-columns:auto 1fr auto;gap:48px;align-items:center;padding:18px 32px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:22px;letter-spacing:-.02em">CRATE</span><div style="display:flex;gap:24px"><a href="#">New</a><a href="#">Tops</a><a href="#">Bottoms</a><a href="#">Outerwear</a><a href="#">Accessories</a></div><div style="display:flex;gap:24px"><a href="#">Search</a><a href="#">Account</a><a href="#">Bag (2)</a></div></div>
+<div style="display:grid;grid-template-columns:repeat(12,1fr);border-bottom:2px solid var(--color-divider)">
+<div class="grayscale" style="grid-column:span 7;position:relative;height:640px;border-right:2px solid var(--color-divider)"><image-slot id="h2a-hero" shape="rect" placeholder="campaign image, drop 07" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div>
+<div style="grid-column:span 5;display:flex;flex-direction:column;justify-content:space-between;padding:32px">
+<div style="display:flex;justify-content:space-between;font-size:12px;letter-spacing:.08em;text-transform:uppercase"><span style="color:var(--color-accent-700);font-weight:600">Drop 07 / Autumn 26</span><span>Out now</span></div>
+<div style="display:flex;flex-direction:column;gap:24px;align-items:flex-start"><h1 style="font-size:104px;line-height:.88;letter-spacing:-.045em;margin:0">CONCRETE SEASON</h1><p style="font-size:17px;max-width:380px;margin:0">Heavyweight cotton, ripstop and nylon. 22 pieces, made in limited runs.</p><a href="#" class="btn btn-primary" style="height:52px;padding:0 20px;width:300px;justify-content:space-between;font-size:15px"><span>Shop the drop</span><span>→</span></a></div>
+</div>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;padding:28px 32px 16px"><h2 style="margin:0;font-size:32px">Latest</h2><a href="#" style="font-size:14px">View all 22 →</a></div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--color-divider);border-top:2px solid var(--color-divider);border-bottom:2px solid var(--color-divider)">
+<sc-for list="{{ h2aD }}" as="p" hint-placeholder-count="4"><div style="background:var(--color-bg);padding:16px;display:flex;flex-direction:column;gap:12px"><div class="grayscale" style="position:relative;aspect-ratio:3/4;background:var(--color-surface)"><image-slot id="{{ p.id }}" shape="rect" placeholder="product shot" style="position:absolute;inset:0;width:100%;height:100%"></image-slot><sc-if value="{{ p.hasTag }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:8px;left:8px;pointer-events:none;background:var(--color-text);color:var(--color-bg);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px">{{ p.tag }}</span></sc-if></div><div style="display:flex;justify-content:space-between;font-size:14px"><span style="font-weight:600">{{ p.name }}</span><span>{{ p.price }}</span></div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:-8px">{{ p.cw }}</div></div></sc-for>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--color-divider)">
+<sc-for list="{{ cats }}" as="c" hint-placeholder-count="4"><a href="#" style="background:var(--color-bg);padding:24px 32px 32px;display:flex;flex-direction:column;gap:40px" style-hover="background:var(--color-accent);color:var(--color-bg)"><span style="font-size:12px">{{ c.no }}</span><span style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-weight:800;font-size:32px;letter-spacing:-.02em">{{ c.name }}</span><span style="font-size:13px">{{ c.count }}</span></span></a></sc-for>
+</div>
+</div>
+<div class="dv-card" style="width:390px;height:844px">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:20px">CRATE</span><div style="display:flex;gap:16px"><span>Search</span><span>Bag 2</span><span>Menu</span></div></div>
+<div class="grayscale" style="position:relative;height:400px;border-bottom:2px solid var(--color-divider)"><image-slot id="h2a-m-hero" shape="rect" placeholder="campaign image" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div>
+<div style="padding:16px;display:flex;flex-direction:column;gap:12px;border-bottom:2px solid var(--color-divider)"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-accent-700);font-weight:600">Drop 07 / Out now</span><h1 style="font-size:52px;line-height:.88;letter-spacing:-.045em;margin:0">CONCRETE SEASON</h1><a href="#" class="btn btn-primary" style="height:48px;padding:0 16px;justify-content:space-between;font-size:15px"><span>Shop the drop</span><span>→</span></a></div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;padding:16px"><span style="font-weight:800;font-size:22px">Latest</span><span style="font-size:13px">View all →</span></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--color-divider);border-top:2px solid var(--color-divider)">
+<sc-for list="{{ h2aM }}" as="p" hint-placeholder-count="2"><div style="background:var(--color-bg);padding:10px;display:flex;flex-direction:column;gap:8px"><div class="grayscale" style="position:relative;aspect-ratio:3/4;background:var(--color-surface)"><image-slot id="{{ p.id }}" shape="rect" placeholder="product" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div><div style="display:flex;justify-content:space-between;font-size:13px;gap:8px"><span style="font-weight:600">{{ p.name }}</span><span>{{ p.price }}</span></div></div></sc-for>
+</div>
+</div>
+</div></div>
+
+<div class="dv-opt" id="2b"><div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>Home · Poster, built around the next drop</div>
+<div style="display:flex;gap:24px;align-items:flex-start">
+<div class="dv-card" style="width:1280px">
+<div style="display:grid;grid-template-columns:auto 1fr auto;gap:48px;align-items:center;padding:18px 32px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:22px;letter-spacing:-.02em">CRATE</span><div style="display:flex;gap:24px"><a href="#">New</a><a href="#">Tops</a><a href="#">Bottoms</a><a href="#">Outerwear</a><a href="#">Accessories</a></div><div style="display:flex;gap:24px"><a href="#">Search</a><a href="#">Account</a><a href="#">Bag (2)</a></div></div>
+<div style="background:var(--color-accent);color:var(--color-bg);display:grid;grid-template-columns:repeat(12,1fr);height:600px">
+<div style="grid-column:span 8;padding:32px;display:flex;flex-direction:column;justify-content:space-between"><span style="font-size:15px;font-weight:600">Next drop: Friday 26.09, 10:00 CET</span><span style="font-family:var(--font-heading);font-weight:800;font-size:280px;line-height:.78;letter-spacing:-.065em">DROP 08</span></div>
+<div class="grayscale" style="grid-column:span 4;position:relative"><image-slot id="h2b-hero" shape="rect" placeholder="drop 08 teaser" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--color-divider);border-bottom:2px solid var(--color-divider)">
+<div style="background:var(--color-bg);padding:20px 32px"><div style="font-weight:800;font-size:64px;line-height:1;letter-spacing:-.04em">02</div><div style="font-size:13px">Days</div></div>
+<div style="background:var(--color-bg);padding:20px 32px"><div style="font-weight:800;font-size:64px;line-height:1;letter-spacing:-.04em">14</div><div style="font-size:13px">Hours</div></div>
+<div style="background:var(--color-bg);padding:20px 32px"><div style="font-weight:800;font-size:64px;line-height:1;letter-spacing:-.04em">22</div><div style="font-size:13px">Minutes</div></div>
+<div style="background:var(--color-bg);padding:20px 32px;display:flex;flex-direction:column;justify-content:space-between;gap:12px"><span style="font-size:13px">Members get 30 min early access.</span><a href="#" class="btn" style="background:var(--color-text);color:var(--color-bg);height:48px;justify-content:space-between;padding:0 16px"><span>Notify me</span><span>→</span></a></div>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;padding:28px 32px 16px"><h2 style="margin:0;font-size:32px">Still in stock: Drop 07</h2><a href="#" style="font-size:14px">Shop all →</a></div>
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:2px;background:var(--color-divider);border-top:2px solid var(--color-divider)">
+<sc-for list="{{ h2bD }}" as="p" hint-placeholder-count="5"><div style="background:var(--color-bg);padding:16px;display:flex;flex-direction:column;gap:12px"><span style="font-weight:800;font-size:40px;line-height:1;color:var(--color-accent)">{{ p.no }}</span><div class="grayscale" style="position:relative;aspect-ratio:4/5;background:var(--color-surface)"><image-slot id="{{ p.id }}" shape="rect" placeholder="product shot" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div><div style="display:flex;justify-content:space-between;font-size:14px;gap:8px"><span style="font-weight:600">{{ p.name }}</span><span>{{ p.price }}</span></div></div></sc-for>
+</div>
+</div>
+<div class="dv-card" style="width:390px;height:844px">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:20px">CRATE</span><div style="display:flex;gap:16px"><span>Search</span><span>Bag 2</span><span>Menu</span></div></div>
+<div style="background:var(--color-accent);color:var(--color-bg);padding:16px;height:380px;display:flex;flex-direction:column;justify-content:space-between"><span style="font-size:14px;font-weight:600">Next drop: Fri 26.09, 10:00</span><span style="font-weight:800;font-size:150px;line-height:.78;letter-spacing:-.065em">DROP 08</span></div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--color-divider);border-bottom:2px solid var(--color-divider)">
+<div style="background:var(--color-bg);padding:12px 16px"><div style="font-weight:800;font-size:40px;line-height:1">02</div><div style="font-size:12px">Days</div></div>
+<div style="background:var(--color-bg);padding:12px 16px"><div style="font-weight:800;font-size:40px;line-height:1">14</div><div style="font-size:12px">Hours</div></div>
+<div style="background:var(--color-bg);padding:12px 16px"><div style="font-weight:800;font-size:40px;line-height:1">22</div><div style="font-size:12px">Minutes</div></div>
+</div>
+<div style="padding:16px;border-bottom:2px solid var(--color-divider)"><a href="#" class="btn" style="background:var(--color-text);color:var(--color-bg);height:48px;justify-content:space-between;padding:0 16px;width:100%"><span>Notify me</span><span>→</span></a></div>
+<div class="grayscale" style="position:relative;height:300px"><image-slot id="h2b-m-hero" shape="rect" placeholder="drop 08 teaser" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div>
+</div>
+</div></div>
+</div>
+
+<div class="dv-screen">02 Category</div>
+<div class="dv-opts">
+<div class="dv-opt" id="2c"><div class="dv-olabel"><a class="dv-oid" href="#2c">2c</a>Category · Grid with ruled filter bar</div>
+<div style="display:flex;gap:24px;align-items:flex-start">
+<div class="dv-card" style="width:1280px">
+<div style="display:grid;grid-template-columns:auto 1fr auto;gap:48px;align-items:center;padding:18px 32px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:22px;letter-spacing:-.02em">CRATE</span><div style="display:flex;gap:24px"><a href="#">New</a><a href="#" style="color:var(--color-accent)">Tops</a><a href="#">Bottoms</a><a href="#">Outerwear</a><a href="#">Accessories</a></div><div style="display:flex;gap:24px"><a href="#">Search</a><a href="#">Account</a><a href="#">Bag (2)</a></div></div>
+<div style="display:flex;justify-content:space-between;align-items:flex-end;padding:32px 32px 24px"><div style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;color:var(--color-neutral-700)">Shop / Tops</span><h1 style="margin:0;font-size:72px;line-height:.9;letter-spacing:-.04em">Tops</h1></div><span style="font-size:14px">64 pieces</span></div>
+<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:2px;background:var(--color-divider);border-top:2px solid var(--color-divider);border-bottom:2px solid var(--color-divider);font-size:14px">
+<sc-for list="{{ filters }}" as="f" hint-placeholder-count="6"><div style="background:var(--color-bg);padding:14px 16px;display:flex;justify-content:space-between" style-hover="background:var(--color-surface)"><span><span style="color:var(--color-neutral-700)">{{ f.k }}</span> {{ f.v }}</span><span>↓</span></div></sc-for>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--color-divider);border-bottom:2px solid var(--color-divider)">
+<sc-for list="{{ c2cD }}" as="p" hint-placeholder-count="8"><div style="background:var(--color-bg);padding:16px;display:flex;flex-direction:column;gap:12px"><div class="grayscale" style="position:relative;aspect-ratio:3/4;background:var(--color-surface)"><image-slot id="{{ p.id }}" shape="rect" placeholder="product shot" style="position:absolute;inset:0;width:100%;height:100%"></image-slot><sc-if value="{{ p.hasTag }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:8px;left:8px;pointer-events:none;background:var(--color-text);color:var(--color-bg);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px">{{ p.tag }}</span></sc-if></div><div style="display:flex;justify-content:space-between;font-size:14px"><span style="font-weight:600">{{ p.name }}</span><span>{{ p.price }}</span></div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:-8px">{{ p.cw }}</div></div></sc-for>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:24px 32px 32px"><span style="font-size:14px">Showing 8 of 64</span><a href="#" class="btn btn-secondary" style="height:48px;width:240px;justify-content:space-between;padding:0 16px;border-width:2px"><span>Load more</span><span>↓</span></a></div>
+</div>
+<div class="dv-card" style="width:390px;height:844px">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:20px">CRATE</span><div style="display:flex;gap:16px"><span>Search</span><span>Bag 2</span><span>Menu</span></div></div>
+<div style="display:flex;justify-content:space-between;align-items:flex-end;padding:20px 16px 16px"><h1 style="margin:0;font-size:48px;line-height:.9;letter-spacing:-.04em">Tops</h1><span style="font-size:13px">64 pieces</span></div>
+<div style="display:flex;gap:6px;padding:0 16px 16px;overflow:hidden;font-size:13px"><span style="padding:6px 12px;background:var(--color-text);color:var(--color-bg)">All</span><span style="padding:6px 12px;border:1px solid var(--color-divider)">Tees</span><span style="padding:6px 12px;border:1px solid var(--color-divider)">Hoodies</span><span style="padding:6px 12px;border:1px solid var(--color-divider)">Knit</span><span style="padding:6px 12px;border:1px solid var(--color-divider)">Shirts</span></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--color-divider);border-top:2px solid var(--color-divider);border-bottom:2px solid var(--color-divider);font-size:14px"><div style="background:var(--color-bg);padding:14px 16px;display:flex;justify-content:space-between"><span>Filter (2)</span><span>+</span></div><div style="background:var(--color-bg);padding:14px 16px;display:flex;justify-content:space-between"><span>Sort: Newest</span><span>↓</span></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--color-divider)">
+<sc-for list="{{ c2cM }}" as="p" hint-placeholder-count="4"><div style="background:var(--color-bg);padding:10px;display:flex;flex-direction:column;gap:8px"><div class="grayscale" style="position:relative;aspect-ratio:3/4;background:var(--color-surface)"><image-slot id="{{ p.id }}" shape="rect" placeholder="product" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div><div style="display:flex;justify-content:space-between;font-size:13px;gap:8px"><span style="font-weight:600">{{ p.name }}</span><span>{{ p.price }}</span></div></div></sc-for>
+</div>
+</div>
+</div></div>
+
+<div class="dv-opt" id="2d"><div class="dv-olabel"><a class="dv-oid" href="#2d">2d</a>Category · Poster index list with hover preview</div>
+<div style="display:flex;gap:24px;align-items:flex-start">
+<div class="dv-card" style="width:1280px">
+<div style="display:grid;grid-template-columns:auto 1fr auto;gap:48px;align-items:center;padding:18px 32px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:22px;letter-spacing:-.02em">CRATE</span><div style="display:flex;gap:24px"><a href="#">New</a><a href="#" style="color:var(--color-accent)">Tops</a><a href="#">Bottoms</a><a href="#">Outerwear</a><a href="#">Accessories</a></div><div style="display:flex;gap:24px"><a href="#">Search</a><a href="#">Account</a><a href="#">Bag (2)</a></div></div>
+<div style="display:flex;justify-content:space-between;align-items:flex-end;padding:24px 32px;border-bottom:2px solid var(--color-divider)"><div style="display:flex;align-items:flex-start;gap:12px"><span style="font-weight:800;font-size:180px;line-height:.8;letter-spacing:-.06em">TOPS</span><span style="font-weight:800;font-size:28px;color:var(--color-accent)">64</span></div>
+<div style="display:flex;flex-direction:column;gap:12px;align-items:flex-end"><div class="seg"><label class="seg-opt"><input type="radio" name="v2d"><span>Grid</span></label><label class="seg-opt"><input type="radio" name="v2d" checked=""><span>Index</span></label></div><span style="font-size:14px">Filter + · Sort: Newest ↓</span></div></div>
+<div style="display:grid;grid-template-columns:repeat(12,1fr)">
+<div style="grid-column:span 8;border-right:2px solid var(--color-divider)">
+<div style="display:grid;grid-template-columns:64px 1fr 160px 160px 96px;padding:10px 32px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);border-bottom:2px solid var(--color-divider)"><span>No.</span><span>Piece</span><span>Colourways</span><span>Sizes</span><span style="text-align:right">Price</span></div>
+<sc-for list="{{ c2dD }}" as="p" hint-placeholder-count="8"><div style="display:grid;grid-template-columns:64px 1fr 160px 160px 96px;align-items:center;padding:0 32px;height:64px;font-size:15px;border-bottom:1px solid var(--color-divider);background:{{ p.rowBg }};color:{{ p.rowFg }}" style-hover="background:var(--color-accent);color:var(--color-bg)"><span style="font-size:13px">{{ p.no }}</span><span style="font-weight:800;font-size:22px;letter-spacing:-.02em">{{ p.name }}</span><span style="font-size:13px">{{ p.cw }}</span><span style="font-size:13px">{{ p.sizes }}</span><span style="text-align:right">{{ p.price }}</span></div></sc-for>
+</div>
+<div style="grid-column:span 4;padding:24px;display:flex;flex-direction:column;gap:12px"><div class="grayscale" style="position:relative;aspect-ratio:3/4;background:var(--color-surface)"><image-slot id="c2d-preview" shape="rect" placeholder="hover preview: nylon track jacket" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div><div style="display:flex;justify-content:space-between;font-size:14px"><span style="font-weight:600">03 Nylon Track Jacket</span><span>$165</span></div><span style="font-size:12px;color:var(--color-accent-700)">Low stock: 9 left</span></div>
+</div>
+</div>
+<div class="dv-card" style="width:390px;height:844px">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:20px">CRATE</span><div style="display:flex;gap:16px"><span>Search</span><span>Bag 2</span><span>Menu</span></div></div>
+<div style="display:flex;align-items:flex-start;gap:8px;padding:16px;border-bottom:2px solid var(--color-divider)"><span style="font-weight:800;font-size:104px;line-height:.8;letter-spacing:-.06em">TOPS</span><span style="font-weight:800;font-size:20px;color:var(--color-accent)">64</span></div>
+<sc-for list="{{ c2dM }}" as="p" hint-placeholder-count="8"><div style="display:grid;grid-template-columns:28px 64px 1fr auto;gap:12px;align-items:center;padding:8px 16px;border-bottom:1px solid var(--color-divider)"><span style="font-size:12px">{{ p.no }}</span><div class="grayscale" style="position:relative;width:64px;height:80px;background:var(--color-surface)"><image-slot id="{{ p.id }}" shape="rect" placeholder="" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div><div style="display:flex;flex-direction:column;gap:2px"><span style="font-weight:800;font-size:16px;letter-spacing:-.01em">{{ p.name }}</span><span style="font-size:12px;color:var(--color-neutral-700)">{{ p.cw }}</span></div><span style="font-size:14px">{{ p.price }}</span></div></sc-for>
+</div>
+</div></div>
+</div>
+
+<div class="dv-screen">03 Product detail</div>
+<div class="dv-opts">
+<div class="dv-opt" id="2e"><div class="dv-olabel"><a class="dv-oid" href="#2e">2e</a>Product · Grid gallery, ruled buy box</div>
+<div style="display:flex;gap:24px;align-items:flex-start">
+<div class="dv-card" style="width:1280px">
+<div style="display:grid;grid-template-columns:auto 1fr auto;gap:48px;align-items:center;padding:18px 32px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:22px;letter-spacing:-.02em">CRATE</span><div style="display:flex;gap:24px"><a href="#">New</a><a href="#">Tops</a><a href="#">Bottoms</a><a href="#" style="color:var(--color-accent)">Outerwear</a><a href="#">Accessories</a></div><div style="display:flex;gap:24px"><a href="#">Search</a><a href="#">Account</a><a href="#">Bag (2)</a></div></div>
+<div style="display:grid;grid-template-columns:repeat(12,1fr);border-bottom:2px solid var(--color-divider)">
+<div style="grid-column:span 7;display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--color-divider);border-right:2px solid var(--color-divider)">
+<div class="grayscale" style="position:relative;aspect-ratio:3/4;background:var(--color-surface)"><image-slot id="p2e-0" shape="rect" placeholder="on-model, front" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div>
+<div class="grayscale" style="position:relative;aspect-ratio:3/4;background:var(--color-surface)"><image-slot id="p2e-1" shape="rect" placeholder="on-model, back" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div>
+<div class="grayscale" style="position:relative;aspect-ratio:3/4;background:var(--color-surface)"><image-slot id="p2e-2" shape="rect" placeholder="flat lay" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div>
+<div class="grayscale" style="position:relative;aspect-ratio:3/4;background:var(--color-surface)"><image-slot id="p2e-3" shape="rect" placeholder="detail: zip + label" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div>
+</div>
+<div style="grid-column:span 5;padding:32px;display:flex;flex-direction:column;gap:28px">
+<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--color-neutral-700)">Outerwear / Jackets</span><span class="tag tag-accent">Drop 07</span></div>
+<div style="display:flex;flex-direction:column;gap:8px"><h1 style="margin:0;font-size:52px;line-height:.95;letter-spacing:-.035em">Nylon Track Jacket</h1><span style="font-size:22px">$165</span></div>
+<div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:13px">Colour: <b>Black</b></span><div style="display:flex;gap:8px"><span style="width:48px;height:48px;background:#1d1c1b;outline:2px solid var(--color-text);outline-offset:3px"></span><span style="width:48px;height:48px;background:#8c8a84"></span></div></div>
+<div style="display:flex;flex-direction:column;gap:10px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>Size</span><a href="#" style="text-decoration:underline">Size guide</a></div>
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:2px;background:var(--color-divider);border:2px solid var(--color-divider);font-size:15px">
+<span style="background:var(--color-bg);height:52px;display:flex;align-items:center;padding:0 14px">S</span><span style="background:var(--color-text);color:var(--color-bg);height:52px;display:flex;align-items:center;padding:0 14px;font-weight:600">M</span><span style="background:var(--color-bg);height:52px;display:flex;align-items:center;padding:0 14px">L</span><span style="background:var(--color-bg);height:52px;display:flex;align-items:center;padding:0 14px">XL</span><span style="background:var(--color-surface);color:var(--color-neutral-500);height:52px;display:flex;align-items:center;padding:0 14px;text-decoration:line-through">XXL</span>
+</div><span style="font-size:13px;color:var(--color-neutral-700)">Cut oversized. Take your usual size.</span><a href="#3a" class="btn btn-secondary" style="height:44px;padding:0 16px;justify-content:space-between"><span>Not sure? Try it on in 3D</span><span>→</span></a></div>
+<div style="display:flex;flex-direction:column;gap:8px"><a href="#" class="btn btn-primary" style="height:56px;padding:0 20px;justify-content:space-between;font-size:16px"><span>Add to bag</span><span>$165 →</span></a><a href="#" class="btn btn-secondary" style="height:48px;padding:0 20px;justify-content:space-between"><span>Save to wishlist</span><span>+</span></a></div>
+<div style="display:flex;flex-direction:column;border-top:2px solid var(--color-divider);font-size:14px">
+<div style="display:grid;grid-template-columns:120px 1fr;padding:12px 0;border-bottom:1px solid var(--color-divider)"><span style="color:var(--color-neutral-700)">Fabric</span><span>100% recycled nylon, mesh lining</span></div>
+<div style="display:grid;grid-template-columns:120px 1fr;padding:12px 0;border-bottom:1px solid var(--color-divider)"><span style="color:var(--color-neutral-700)">Fit</span><span>Oversized, dropped shoulder</span></div>
+<div style="display:grid;grid-template-columns:120px 1fr;padding:12px 0;border-bottom:1px solid var(--color-divider)"><span style="color:var(--color-neutral-700)">Model</span><span>188 cm, wears M</span></div>
+<div style="display:grid;grid-template-columns:120px 1fr;padding:12px 0;border-bottom:1px solid var(--color-divider)"><span style="color:var(--color-neutral-700)">Shipping</span><span>Free over $150 · 30-day returns</span></div>
+</div>
+</div>
+</div>
+<div style="padding:28px 32px 16px"><h2 style="margin:0;font-size:32px">Wear it with</h2></div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--color-divider);border-top:2px solid var(--color-divider)">
+<sc-for list="{{ related }}" as="p" hint-placeholder-count="4"><div style="background:var(--color-bg);padding:16px;display:flex;flex-direction:column;gap:12px"><div class="grayscale" style="position:relative;aspect-ratio:4/5;background:var(--color-surface)"><image-slot id="{{ p.id }}" shape="rect" placeholder="product shot" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div><div style="display:flex;justify-content:space-between;font-size:14px"><span style="font-weight:600">{{ p.name }}</span><span>{{ p.price }}</span></div></div></sc-for>
+</div>
+</div>
+<div class="dv-card" style="width:390px;height:844px;position:relative">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:2px solid var(--color-divider);font-size:14px"><span>← Back</span><span style="font-weight:800;font-size:20px">CRATE</span><span>Bag 2</span></div>
+<div class="grayscale" style="position:relative;height:460px;border-bottom:2px solid var(--color-divider)"><image-slot id="p2e-m-0" shape="rect" placeholder="on-model, front (swipe)" style="position:absolute;inset:0;width:100%;height:100%"></image-slot><span style="position:absolute;right:12px;bottom:12px;pointer-events:none;background:var(--color-bg);font-size:12px;padding:3px 8px">1 / 4</span></div>
+<div style="padding:16px;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;justify-content:space-between;align-items:baseline"><h1 style="margin:0;font-size:30px;letter-spacing:-.03em">Nylon Track Jacket</h1><span style="font-size:18px">$165</span></div>
+<div style="display:flex;gap:8px;align-items:center;font-size:13px"><span style="width:32px;height:32px;background:#1d1c1b;outline:2px solid var(--color-text);outline-offset:2px"></span><span style="width:32px;height:32px;background:#8c8a84"></span><span style="margin-left:8px">Black</span></div>
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:2px;background:var(--color-divider);border:2px solid var(--color-divider);font-size:14px"><span style="background:var(--color-bg);height:48px;display:flex;align-items:center;padding:0 10px">S</span><span style="background:var(--color-text);color:var(--color-bg);height:48px;display:flex;align-items:center;padding:0 10px;font-weight:600">M</span><span style="background:var(--color-bg);height:48px;display:flex;align-items:center;padding:0 10px">L</span><span style="background:var(--color-bg);height:48px;display:flex;align-items:center;padding:0 10px">XL</span><span style="background:var(--color-surface);color:var(--color-neutral-500);height:48px;display:flex;align-items:center;padding:0 10px;text-decoration:line-through">XXL</span></div>
+</div>
+<div style="position:absolute;left:0;right:0;bottom:0;padding:12px 16px 24px;background:var(--color-bg);border-top:2px solid var(--color-divider)"><a href="#" class="btn btn-primary" style="height:52px;padding:0 16px;justify-content:space-between;font-size:15px;width:100%"><span>Add to bag · M</span><span>$165 →</span></a></div>
+</div>
+</div></div>
+
+<div class="dv-opt" id="2f"><div class="dv-olabel"><a class="dv-oid" href="#2f">2f</a>Product · Poster, limited-run stock counter</div>
+<div style="display:flex;gap:24px;align-items:flex-start">
+<div class="dv-card" style="width:1280px">
+<div style="display:grid;grid-template-columns:auto 1fr auto;gap:48px;align-items:center;padding:18px 32px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:22px;letter-spacing:-.02em">CRATE</span><div style="display:flex;gap:24px"><a href="#">New</a><a href="#">Tops</a><a href="#">Bottoms</a><a href="#" style="color:var(--color-accent)">Outerwear</a><a href="#">Accessories</a></div><div style="display:flex;gap:24px"><a href="#">Search</a><a href="#">Account</a><a href="#">Bag (2)</a></div></div>
+<div style="padding:24px 32px 20px;border-bottom:2px solid var(--color-divider);display:flex;flex-direction:column;gap:12px"><span style="font-size:13px">Drop 07 · No. 03</span><span style="font-weight:800;font-size:132px;line-height:.82;letter-spacing:-.055em">NYLON TRACK JACKET</span></div>
+<div style="display:grid;grid-template-columns:repeat(12,1fr);height:640px">
+<div class="grayscale" style="grid-column:span 8;position:relative;border-right:2px solid var(--color-divider)"><image-slot id="p2f-hero" shape="rect" placeholder="on-model, full-bleed" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div>
+<div style="grid-column:span 4;display:flex;flex-direction:column">
+<div style="background:var(--color-accent);color:var(--color-bg);padding:24px 32px;display:flex;flex-direction:column;gap:4px"><span style="font-weight:800;font-size:96px;line-height:.9;letter-spacing:-.05em">9/250</span><span style="font-size:15px;font-weight:600">left in this run. No restocks.</span></div>
+<div style="padding:24px 32px;display:flex;flex-direction:column;gap:16px;flex:1">
+<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-weight:800;font-size:32px">$165</span><span style="font-size:13px">Black · Oversized</span></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--color-divider);border:2px solid var(--color-divider)">
+<span style="background:var(--color-bg);height:64px;display:flex;align-items:center;padding:0 16px;font-weight:800;font-size:24px">S</span><span style="background:var(--color-text);color:var(--color-bg);height:64px;display:flex;align-items:center;padding:0 16px;font-weight:800;font-size:24px">M</span><span style="background:var(--color-bg);height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-weight:800;font-size:24px"><span>L</span><span style="font-size:12px;font-weight:600;color:var(--color-accent-700)">2 left</span></span><span style="background:var(--color-surface);color:var(--color-neutral-500);height:64px;display:flex;align-items:center;padding:0 16px;font-weight:800;font-size:24px;text-decoration:line-through">XL</span>
+</div>
+<a href="#" class="btn" style="background:var(--color-text);color:var(--color-bg);height:60px;padding:0 20px;justify-content:space-between;font-size:16px;margin-top:auto"><span>Add to bag</span><span>→</span></a>
+<span style="font-size:13px;color:var(--color-neutral-700)">Recycled nylon, mesh lining. Model is 188 cm and wears M.</span>
+</div>
+</div>
+</div>
+</div>
+<div class="dv-card" style="width:390px;height:844px;position:relative">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:2px solid var(--color-divider);font-size:14px"><span>← Back</span><span style="font-weight:800;font-size:20px">CRATE</span><span>Bag 2</span></div>
+<div style="padding:16px;border-bottom:2px solid var(--color-divider)"><span style="font-weight:800;font-size:60px;line-height:.84;letter-spacing:-.055em">NYLON TRACK JACKET</span></div>
+<div class="grayscale" style="position:relative;height:340px;border-bottom:2px solid var(--color-divider)"><image-slot id="p2f-m-hero" shape="rect" placeholder="on-model" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div>
+<div style="background:var(--color-accent);color:var(--color-bg);padding:12px 16px;display:flex;justify-content:space-between;align-items:baseline"><span style="font-weight:800;font-size:40px;letter-spacing:-.04em">9/250</span><span style="font-size:14px;font-weight:600">left · no restocks</span></div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--color-divider);border-bottom:2px solid var(--color-divider)"><span style="background:var(--color-bg);height:56px;display:flex;align-items:center;padding:0 14px;font-weight:800;font-size:20px">S</span><span style="background:var(--color-text);color:var(--color-bg);height:56px;display:flex;align-items:center;padding:0 14px;font-weight:800;font-size:20px">M</span><span style="background:var(--color-bg);height:56px;display:flex;align-items:center;padding:0 14px;font-weight:800;font-size:20px">L</span><span style="background:var(--color-surface);color:var(--color-neutral-500);height:56px;display:flex;align-items:center;padding:0 14px;font-weight:800;font-size:20px;text-decoration:line-through">XL</span></div>
+<div style="position:absolute;left:0;right:0;bottom:0;padding:12px 16px 24px;background:var(--color-bg)"><a href="#" class="btn" style="background:var(--color-text);color:var(--color-bg);height:56px;padding:0 16px;justify-content:space-between;font-size:15px;width:100%"><span>Add to bag · $165</span><span>→</span></a></div>
+</div>
+</div></div>
+</div>
+
+<div class="dv-screen">04 Cart</div>
+<div class="dv-opts">
+<div class="dv-opt" id="2g"><div class="dv-olabel"><a class="dv-oid" href="#2g">2g</a>Cart · Grid drawer / bottom sheet</div>
+<div style="display:flex;gap:24px;align-items:flex-start">
+<div class="dv-card" style="width:1280px;height:820px;position:relative;background:var(--color-surface)">
+<div style="position:absolute;inset:0;background:color-mix(in srgb, var(--color-neutral-900) 50%, transparent)"></div>
+<div style="position:absolute;top:0;right:0;bottom:0;width:460px;background:var(--color-bg);display:flex;flex-direction:column;box-shadow:var(--shadow-lg)">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:2px solid var(--color-divider)"><span style="font-weight:800;font-size:24px">Bag (2)</span><span style="font-size:14px">Close ×</span></div>
+<div style="padding:16px 24px;display:flex;flex-direction:column;gap:8px;border-bottom:2px solid var(--color-divider)"><span style="font-size:14px">Free shipping unlocked.</span><div style="height:6px;background:var(--color-accent)"></div></div>
+<sc-for list="{{ cartItems }}" as="i" hint-placeholder-count="2"><div style="display:grid;grid-template-columns:96px 1fr auto;gap:16px;padding:16px 24px;border-bottom:1px solid var(--color-divider)"><div class="grayscale" style="position:relative;width:96px;height:120px;background:var(--color-surface)"><image-slot id="{{ i.id }}" shape="rect" placeholder="" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div><div style="display:flex;flex-direction:column;justify-content:space-between"><div style="display:flex;flex-direction:column;gap:2px"><span style="font-weight:600;font-size:15px">{{ i.name }}</span><span style="font-size:13px;color:var(--color-neutral-700)">{{ i.meta }}</span></div><div style="display:flex;gap:16px;align-items:center;font-size:13px"><div style="display:grid;grid-template-columns:32px 32px 32px;border:1px solid var(--color-divider);height:32px;align-items:center;text-align:center"><span>−</span><span>{{ i.qty }}</span><span>+</span></div><a href="#" style="text-decoration:underline">Remove</a></div></div><span style="font-size:15px">{{ i.price }}</span></div></sc-for>
+<div style="margin-top:auto;padding:20px 24px 24px;border-top:2px solid var(--color-divider);display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;font-size:14px"><span>Subtotal</span><span>$213.00</span></div>
+<div style="display:flex;justify-content:space-between;font-size:14px"><span>Shipping</span><span>Free</span></div>
+<a href="#" class="btn btn-primary" style="height:56px;padding:0 20px;justify-content:space-between;font-size:16px"><span>Checkout</span><span>$213 →</span></a>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><a href="#" class="btn btn-secondary" style="height:44px;justify-content:flex-start">Apple Pay</a><a href="#" class="btn btn-secondary" style="height:44px;justify-content:flex-start">PayPal</a></div>
+</div>
+</div>
+<div style="position:absolute;top:24px;left:32px;font-weight:800;font-size:22px;color:var(--color-bg)">CRATE</div>
+</div>
+<div class="dv-card" style="width:390px;height:844px;position:relative;background:var(--color-surface)">
+<div style="position:absolute;inset:0;background:color-mix(in srgb, var(--color-neutral-900) 50%, transparent)"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;height:680px;background:var(--color-bg);display:flex;flex-direction:column">
+<div style="display:flex;justify-content:center;padding:8px 0 0"><span style="width:40px;height:4px;background:var(--color-neutral-400)"></span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 16px;border-bottom:2px solid var(--color-divider)"><span style="font-weight:800;font-size:22px">Bag (2)</span><span style="font-size:14px">Close</span></div>
+<div style="padding:12px 16px;display:flex;flex-direction:column;gap:6px;border-bottom:2px solid var(--color-divider)"><span style="font-size:13px">Free shipping unlocked.</span><div style="height:4px;background:var(--color-accent)"></div></div>
+<sc-for list="{{ cartItems }}" as="i" hint-placeholder-count="2"><div style="display:grid;grid-template-columns:72px 1fr auto;gap:12px;padding:12px 16px;border-bottom:1px solid var(--color-divider)"><div class="grayscale" style="position:relative;width:72px;height:90px;background:var(--color-surface)"><image-slot id="m-{{ i.id }}" shape="rect" placeholder="" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div><div style="display:flex;flex-direction:column;justify-content:space-between"><div style="display:flex;flex-direction:column"><span style="font-weight:600;font-size:14px">{{ i.name }}</span><span style="font-size:12px;color:var(--color-neutral-700)">{{ i.meta }}</span></div><div style="display:grid;grid-template-columns:32px 32px 32px;border:1px solid var(--color-divider);height:32px;align-items:center;text-align:center;font-size:13px;width:98px"><span>−</span><span>{{ i.qty }}</span><span>+</span></div></div><span style="font-size:14px">{{ i.price }}</span></div></sc-for>
+<div style="margin-top:auto;padding:16px 16px 28px;border-top:2px solid var(--color-divider);display:flex;flex-direction:column;gap:10px"><div style="display:flex;justify-content:space-between;font-size:14px"><span>Subtotal · free shipping</span><span>$213.00</span></div><a href="#" class="btn btn-primary" style="height:52px;padding:0 16px;justify-content:space-between;font-size:15px"><span>Checkout</span><span>→</span></a><a href="#" class="btn btn-secondary" style="height:44px;justify-content:flex-start">Apple Pay</a></div>
+</div>
+</div>
+</div></div>
+
+<div class="dv-opt" id="2h"><div class="dv-olabel"><a class="dv-oid" href="#2h">2h</a>Cart · Poster page, ledger rows and red total</div>
+<div style="display:flex;gap:24px;align-items:flex-start">
+<div class="dv-card" style="width:1280px">
+<div style="display:grid;grid-template-columns:auto 1fr auto;gap:48px;align-items:center;padding:18px 32px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:22px;letter-spacing:-.02em">CRATE</span><div style="display:flex;gap:24px"><a href="#">New</a><a href="#">Tops</a><a href="#">Bottoms</a><a href="#">Outerwear</a><a href="#">Accessories</a></div><div style="display:flex;gap:24px"><a href="#">Search</a><a href="#">Account</a><a href="#" style="color:var(--color-accent)">Bag (2)</a></div></div>
+<div style="display:grid;grid-template-columns:repeat(12,1fr)">
+<div style="grid-column:span 8;border-right:2px solid var(--color-divider)">
+<div style="padding:24px 32px;border-bottom:2px solid var(--color-divider);display:flex;align-items:flex-start;gap:12px"><span style="font-weight:800;font-size:160px;line-height:.8;letter-spacing:-.06em">BAG</span><span style="font-weight:800;font-size:28px;color:var(--color-accent)">02</span></div>
+<div style="display:grid;grid-template-columns:120px 1fr 100px 100px 100px;padding:10px 32px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);border-bottom:2px solid var(--color-divider)"><span></span><span>Piece</span><span>Size</span><span>Qty</span><span style="text-align:right">Price</span></div>
+<sc-for list="{{ cartItems }}" as="i" hint-placeholder-count="2"><div style="display:grid;grid-template-columns:120px 1fr 100px 100px 100px;align-items:center;padding:16px 32px;border-bottom:1px solid var(--color-divider);font-size:15px"><div class="grayscale" style="position:relative;width:96px;height:120px;background:var(--color-surface)"><image-slot id="h-{{ i.id }}" shape="rect" placeholder="" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div><div style="display:flex;flex-direction:column;gap:6px"><span style="font-weight:800;font-size:24px;letter-spacing:-.02em">{{ i.name }}</span><a href="#" style="font-size:13px;text-decoration:underline">Remove</a></div><span>{{ i.meta }}</span><span>{{ i.qty }}</span><span style="text-align:right">{{ i.price }}</span></div></sc-for>
+<div style="padding:20px 32px;font-size:14px;color:var(--color-neutral-700)">Items in your bag are not reserved. Drop 07 pieces sell through fast.</div>
+</div>
+<div style="grid-column:span 4;display:flex;flex-direction:column">
+<div style="background:var(--color-accent);color:var(--color-bg);padding:24px 32px;display:flex;flex-direction:column;gap:8px"><span style="font-size:15px;font-weight:600">Total</span><span style="font-weight:800;font-size:112px;line-height:.85;letter-spacing:-.055em">$213</span></div>
+<div style="padding:24px 32px;display:flex;flex-direction:column;gap:12px;font-size:14px">
+<div style="display:flex;justify-content:space-between"><span>Subtotal</span><span>$213.00</span></div>
+<div style="display:flex;justify-content:space-between"><span>Shipping</span><span>Free</span></div>
+<div style="display:flex;justify-content:space-between;color:var(--color-neutral-700)"><span>Tax</span><span>At checkout</span></div>
+<div class="field" style="margin-top:8px"><label>Promo code</label><div style="display:flex;gap:8px"><input class="input" placeholder="CRATE10"><a href="#" class="btn btn-secondary">Apply</a></div></div>
+<a href="#" class="btn" style="background:var(--color-text);color:var(--color-bg);height:60px;padding:0 20px;justify-content:space-between;font-size:16px;margin-top:8px"><span>Checkout</span><span>→</span></a>
+</div>
+</div>
+</div>
+</div>
+<div class="dv-card" style="width:390px;height:844px;position:relative">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:20px">CRATE</span><span>Close</span></div>
+<div style="padding:16px;border-bottom:2px solid var(--color-divider);display:flex;align-items:flex-start;gap:8px"><span style="font-weight:800;font-size:96px;line-height:.8;letter-spacing:-.06em">BAG</span><span style="font-weight:800;font-size:20px;color:var(--color-accent)">02</span></div>
+<sc-for list="{{ cartItems }}" as="i" hint-placeholder-count="2"><div style="display:grid;grid-template-columns:72px 1fr auto;gap:12px;padding:12px 16px;border-bottom:1px solid var(--color-divider)"><div class="grayscale" style="position:relative;width:72px;height:90px;background:var(--color-surface)"><image-slot id="hm-{{ i.id }}" shape="rect" placeholder="" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div><div style="display:flex;flex-direction:column;gap:2px"><span style="font-weight:800;font-size:17px;letter-spacing:-.01em">{{ i.name }}</span><span style="font-size:12px;color:var(--color-neutral-700)">{{ i.meta }} · Qty {{ i.qty }}</span></div><span style="font-size:14px">{{ i.price }}</span></div></sc-for>
+<div style="position:absolute;left:0;right:0;bottom:0">
+<div style="background:var(--color-accent);color:var(--color-bg);padding:12px 16px;display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:14px;font-weight:600">Total · free shipping</span><span style="font-weight:800;font-size:48px;letter-spacing:-.05em;line-height:1">$213</span></div>
+<div style="padding:12px 16px 24px;background:var(--color-bg)"><a href="#" class="btn" style="background:var(--color-text);color:var(--color-bg);height:56px;padding:0 16px;justify-content:space-between;font-size:15px;width:100%"><span>Checkout</span><span>→</span></a></div>
+</div>
+</div>
+</div></div>
+</div>
+
+<div class="dv-screen">05 Checkout</div>
+<div class="dv-opts">
+<div class="dv-opt" id="2i"><div class="dv-olabel"><a class="dv-oid" href="#2i">2i</a>Checkout · Grid, one page, numbered sections</div>
+<div style="display:flex;gap:24px;align-items:flex-start">
+<div class="dv-card" style="width:1280px">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:18px 32px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:22px">CRATE</span><span>Secure checkout</span><a href="#">← Back to bag</a></div>
+<div style="display:grid;grid-template-columns:repeat(12,1fr)">
+<div style="grid-column:span 7;border-right:2px solid var(--color-divider)">
+<div style="padding:24px 32px;border-bottom:2px solid var(--color-divider);display:flex;flex-direction:column;gap:12px"><span style="font-size:13px">Express checkout</span><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px"><a href="#" class="btn" style="background:var(--color-text);color:var(--color-bg);height:48px;justify-content:flex-start;padding:0 16px">Apple Pay</a><a href="#" class="btn btn-secondary" style="height:48px;justify-content:flex-start;padding:0 16px">PayPal</a><a href="#" class="btn btn-secondary" style="height:48px;justify-content:flex-start;padding:0 16px">Klarna</a></div></div>
+<div style="padding:24px 32px;border-bottom:2px solid var(--color-divider);display:grid;grid-template-columns:80px 1fr;gap:16px"><span style="font-weight:800;font-size:32px;color:var(--color-accent)">01</span><div style="display:flex;flex-direction:column;gap:12px"><h3 style="margin:0">Contact</h3><div class="field"><label>Email</label><input class="input" value="sam@example.com" style="height:44px"></div><label class="radio"><input type="checkbox" checked=""><span class="dot"></span>Text me when Drop 08 goes live</label></div></div>
+<div style="padding:24px 32px;border-bottom:2px solid var(--color-divider);display:grid;grid-template-columns:80px 1fr;gap:16px"><span style="font-weight:800;font-size:32px;color:var(--color-accent)">02</span><div style="display:flex;flex-direction:column;gap:12px"><h3 style="margin:0">Delivery</h3>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="field"><label>First name</label><input class="input" value="Sam" style="height:44px"></div><div class="field"><label>Last name</label><input class="input" value="Okafor" style="height:44px"></div></div>
+<div class="field"><label>Address</label><input class="input" value="Torstraße 112" style="height:44px"></div>
+<div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px"><div class="field"><label>City</label><input class="input" value="Berlin" style="height:44px"></div><div class="field"><label>Postcode</label><input class="input" value="10119" style="height:44px"></div><div class="field"><label>Country</label><input class="input" value="Germany" style="height:44px"></div></div>
+<div style="display:flex;flex-direction:column;border:2px solid var(--color-divider);margin-top:4px"><label class="radio" style="padding:14px 16px;border-bottom:1px solid var(--color-divider);justify-content:space-between;display:flex"><span style="display:flex;gap:8px;align-items:center"><input type="radio" name="s2i" checked=""><span class="dot"></span>Standard, 3–5 days</span><span>Free</span></label><label class="radio" style="padding:14px 16px;justify-content:space-between;display:flex"><span style="display:flex;gap:8px;align-items:center"><input type="radio" name="s2i"><span class="dot"></span>Express, next day</span><span>$12</span></label></div>
+</div></div>
+<div style="padding:24px 32px;display:grid;grid-template-columns:80px 1fr;gap:16px"><span style="font-weight:800;font-size:32px;color:var(--color-accent)">03</span><div style="display:flex;flex-direction:column;gap:12px"><h3 style="margin:0">Payment</h3><div class="seg"><label class="seg-opt"><input type="radio" name="p2i" checked=""><span>Card</span></label><label class="seg-opt"><input type="radio" name="p2i"><span>PayPal</span></label><label class="seg-opt"><input type="radio" name="p2i"><span>Klarna</span></label></div><div class="field"><label>Card number</label><input class="input" placeholder="1234 1234 1234 1234" style="height:44px"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="field"><label>Expiry</label><input class="input" placeholder="MM / YY" style="height:44px"></div><div class="field"><label>CVC</label><input class="input" placeholder="123" style="height:44px"></div></div><a href="#" class="btn btn-primary" style="height:56px;padding:0 20px;justify-content:space-between;font-size:16px;margin-top:8px"><span>Place order</span><span>$213.00 →</span></a></div></div>
+</div>
+<div style="grid-column:span 5;background:var(--color-surface);padding:24px 32px;display:flex;flex-direction:column;gap:16px">
+<h3 style="margin:0">Order · 2 items</h3>
+<sc-for list="{{ cartItems }}" as="i" hint-placeholder-count="2"><div style="display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center"><div class="grayscale" style="position:relative;width:64px;height:80px;background:var(--color-bg)"><image-slot id="co-{{ i.id }}" shape="rect" placeholder="" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div><div style="display:flex;flex-direction:column"><span style="font-weight:600;font-size:14px">{{ i.name }}</span><span style="font-size:12px;color:var(--color-neutral-700)">{{ i.meta }}</span></div><span style="font-size:14px">{{ i.price }}</span></div></sc-for>
+<div style="border-top:2px solid var(--color-divider);padding-top:16px;display:flex;flex-direction:column;gap:10px;font-size:14px"><div style="display:flex;justify-content:space-between"><span>Subtotal</span><span>$213.00</span></div><div style="display:flex;justify-content:space-between"><span>Shipping</span><span>Free</span></div><div style="display:flex;justify-content:space-between"><span>VAT incl.</span><span>$34.01</span></div></div>
+<div style="border-top:2px solid var(--color-divider);padding-top:16px;display:flex;justify-content:space-between;align-items:baseline"><span style="font-weight:800;font-size:20px">Total</span><span style="font-weight:800;font-size:32px">$213.00</span></div>
+</div>
+</div>
+</div>
+<div class="dv-card" style="width:390px;height:844px">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:20px">CRATE</span><span>Secure checkout</span></div>
+<div style="display:flex;justify-content:space-between;padding:14px 16px;background:var(--color-surface);border-bottom:2px solid var(--color-divider);font-size:14px"><span>Show order summary ↓</span><span style="font-weight:800">$213.00</span></div>
+<div style="padding:16px;border-bottom:2px solid var(--color-divider);display:flex;flex-direction:column;gap:8px"><a href="#" class="btn" style="background:var(--color-text);color:var(--color-bg);height:48px;justify-content:flex-start;padding:0 16px">Apple Pay</a><a href="#" class="btn btn-secondary" style="height:48px;justify-content:flex-start;padding:0 16px">PayPal</a></div>
+<div style="padding:16px;border-bottom:2px solid var(--color-divider);display:flex;flex-direction:column;gap:12px"><div style="display:flex;gap:12px;align-items:baseline"><span style="font-weight:800;font-size:24px;color:var(--color-accent)">01</span><h4 style="margin:0">Contact</h4></div><div class="field"><label>Email</label><input class="input" value="sam@example.com" style="height:48px"></div></div>
+<div style="padding:16px;display:flex;flex-direction:column;gap:12px"><div style="display:flex;gap:12px;align-items:baseline"><span style="font-weight:800;font-size:24px;color:var(--color-accent)">02</span><h4 style="margin:0">Delivery</h4></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="field"><label>First name</label><input class="input" value="Sam" style="height:48px"></div><div class="field"><label>Last name</label><input class="input" value="Okafor" style="height:48px"></div></div><div class="field"><label>Address</label><input class="input" value="Torstraße 112" style="height:48px"></div><div style="display:grid;grid-template-columns:2fr 1fr;gap:10px"><div class="field"><label>City</label><input class="input" value="Berlin" style="height:48px"></div><div class="field"><label>Postcode</label><input class="input" value="10119" style="height:48px"></div></div></div>
+</div>
+</div></div>
+
+<div class="dv-opt" id="2j"><div class="dv-olabel"><a class="dv-oid" href="#2j">2j</a>Checkout · Poster, one step at a time</div>
+<div style="display:flex;gap:24px;align-items:flex-start">
+<div class="dv-card" style="width:1280px">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:18px 32px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:22px">CRATE</span><a href="#">← Back to bag</a></div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--color-divider);border-bottom:2px solid var(--color-divider);font-size:14px"><div style="background:var(--color-text);color:var(--color-bg);padding:14px 32px;display:flex;justify-content:space-between"><span>01 Details</span><span>Done</span></div><div style="background:var(--color-accent);color:var(--color-bg);padding:14px 32px;font-weight:600">02 Delivery</div><div style="background:var(--color-bg);padding:14px 32px;color:var(--color-neutral-700)">03 Payment</div></div>
+<div style="display:grid;grid-template-columns:repeat(12,1fr)">
+<div style="grid-column:span 8;border-right:2px solid var(--color-divider);padding:32px;display:flex;flex-direction:column;gap:24px">
+<span style="font-weight:800;font-size:144px;line-height:.8;letter-spacing:-.06em">DELIVERY</span>
+<span style="font-size:15px">To Sam Okafor, Torstraße 112, 10119 Berlin. <a href="#" style="text-decoration:underline">Edit</a></span>
+<div style="display:flex;flex-direction:column;border-top:2px solid var(--color-divider)">
+<label style="display:grid;grid-template-columns:1fr auto;align-items:center;padding:20px 24px;border-bottom:2px solid var(--color-divider);background:var(--color-text);color:var(--color-bg);cursor:pointer"><span style="display:flex;flex-direction:column;gap:2px"><span style="font-weight:800;font-size:26px">Standard</span><span style="font-size:14px">3–5 working days, DHL</span></span><span style="font-weight:800;font-size:26px">Free</span></label>
+<label style="display:grid;grid-template-columns:1fr auto;align-items:center;padding:20px 24px;border-bottom:2px solid var(--color-divider);cursor:pointer" style-hover="background:var(--color-surface)"><span style="display:flex;flex-direction:column;gap:2px"><span style="font-weight:800;font-size:26px">Express</span><span style="font-size:14px;color:var(--color-neutral-700)">Next day if ordered before 14:00</span></span><span style="font-weight:800;font-size:26px">$12</span></label>
+<label style="display:grid;grid-template-columns:1fr auto;align-items:center;padding:20px 24px;border-bottom:2px solid var(--color-divider);cursor:pointer" style-hover="background:var(--color-surface)"><span style="display:flex;flex-direction:column;gap:2px"><span style="font-weight:800;font-size:26px">Store pickup</span><span style="font-size:14px;color:var(--color-neutral-700)">Crate Berlin, Mitte. Ready in 2 hours</span></span><span style="font-weight:800;font-size:26px">Free</span></label>
+</div>
+<a href="#" class="btn btn-primary" style="height:60px;width:360px;padding:0 20px;justify-content:space-between;font-size:16px"><span>Continue to payment</span><span>→</span></a>
+</div>
+<div style="grid-column:span 4;display:flex;flex-direction:column">
+<div style="padding:24px 32px;display:flex;flex-direction:column;gap:14px;border-bottom:2px solid var(--color-divider)"><span style="font-size:13px;letter-spacing:.08em;text-transform:uppercase">In your bag</span><sc-for list="{{ cartItems }}" as="i" hint-placeholder-count="2"><div style="display:flex;justify-content:space-between;font-size:15px"><span><b>{{ i.name }}</b> · {{ i.meta }}</span><span>{{ i.price }}</span></div></sc-for></div>
+<div style="background:var(--color-accent);color:var(--color-bg);padding:24px 32px;display:flex;flex-direction:column;gap:4px"><span style="font-size:15px;font-weight:600">Total</span><span style="font-weight:800;font-size:96px;line-height:.85;letter-spacing:-.055em">$213</span></div>
+</div>
+</div>
+</div>
+<div class="dv-card" style="width:390px;height:844px;position:relative">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:20px">CRATE</span><span style="font-weight:800">$213</span></div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--color-divider);border-bottom:2px solid var(--color-divider);font-size:13px"><div style="background:var(--color-text);color:var(--color-bg);padding:10px 12px">01 Details</div><div style="background:var(--color-accent);color:var(--color-bg);padding:10px 12px;font-weight:600">02 Delivery</div><div style="background:var(--color-bg);padding:10px 12px;color:var(--color-neutral-700)">03 Pay</div></div>
+<div style="padding:16px;display:flex;flex-direction:column;gap:12px"><span style="font-weight:800;font-size:72px;line-height:.8;letter-spacing:-.06em">DELIVERY</span><span style="font-size:13px">To Torstraße 112, Berlin. <a href="#" style="text-decoration:underline">Edit</a></span></div>
+<div style="display:flex;flex-direction:column;border-top:2px solid var(--color-divider)">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:2px solid var(--color-divider);background:var(--color-text);color:var(--color-bg)"><span style="display:flex;flex-direction:column"><span style="font-weight:800;font-size:20px">Standard</span><span style="font-size:13px">3–5 days</span></span><span style="font-weight:800;font-size:20px">Free</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:2px solid var(--color-divider)"><span style="display:flex;flex-direction:column"><span style="font-weight:800;font-size:20px">Express</span><span style="font-size:13px;color:var(--color-neutral-700)">Next day</span></span><span style="font-weight:800;font-size:20px">$12</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:2px solid var(--color-divider)"><span style="display:flex;flex-direction:column"><span style="font-weight:800;font-size:20px">Store pickup</span><span style="font-size:13px;color:var(--color-neutral-700)">Crate Berlin, 2 hours</span></span><span style="font-weight:800;font-size:20px">Free</span></div>
+</div>
+<div style="position:absolute;left:0;right:0;bottom:0;padding:12px 16px 24px;background:var(--color-bg)"><a href="#" class="btn btn-primary" style="height:56px;padding:0 16px;justify-content:space-between;font-size:15px;width:100%"><span>Continue to payment</span><span>→</span></a></div>
+</div>
+</div></div>
+</div>
+
+<div class="dv-screen">06 Account / orders</div>
+<div class="dv-opts">
+<div class="dv-opt" id="2k"><div class="dv-olabel"><a class="dv-oid" href="#2k">2k</a>Account · Grid, tracking plus order table</div>
+<div style="display:flex;gap:24px;align-items:flex-start">
+<div class="dv-card" style="width:1280px">
+<div style="display:grid;grid-template-columns:auto 1fr auto;gap:48px;align-items:center;padding:18px 32px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:22px;letter-spacing:-.02em">CRATE</span><div style="display:flex;gap:24px"><a href="#">New</a><a href="#">Tops</a><a href="#">Bottoms</a><a href="#">Outerwear</a><a href="#">Accessories</a></div><div style="display:flex;gap:24px"><a href="#">Search</a><a href="#" style="color:var(--color-accent)">Account</a><a href="#">Bag (2)</a></div></div>
+<div style="display:grid;grid-template-columns:repeat(12,1fr);min-height:640px">
+<div style="grid-column:span 3;border-right:2px solid var(--color-divider);padding:24px 0;display:flex;flex-direction:column;font-size:15px">
+<a href="#" style="padding:12px 32px;background:var(--color-accent);color:var(--color-bg);font-weight:600">Orders</a><a href="#" style="padding:12px 32px">Wishlist (6)</a><a href="#" style="padding:12px 32px">Addresses</a><a href="#" style="padding:12px 32px">Details</a><a href="#" style="padding:12px 32px">Drop alerts</a><a href="#" style="padding:12px 32px;margin-top:24px;color:var(--color-neutral-700)">Log out</a>
+</div>
+<div style="grid-column:span 9;padding:32px;display:flex;flex-direction:column;gap:28px">
+<h1 style="margin:0;font-size:56px;letter-spacing:-.04em">Hi, Sam</h1>
+<div style="display:flex;flex-direction:column;gap:12px"><div style="display:flex;justify-content:space-between;font-size:14px"><span><b>#CR-20931</b> · In transit, arrives Thu 25 Sep</span><a href="#" style="text-decoration:underline">Track with DHL</a></div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--color-divider);border:2px solid var(--color-divider);font-size:14px"><div style="background:var(--color-text);color:var(--color-bg);padding:14px 16px;display:flex;flex-direction:column"><span style="font-weight:600">Ordered</span><span style="font-size:12px">19 Sep</span></div><div style="background:var(--color-text);color:var(--color-bg);padding:14px 16px;display:flex;flex-direction:column"><span style="font-weight:600">Packed</span><span style="font-size:12px">20 Sep</span></div><div style="background:var(--color-accent);color:var(--color-bg);padding:14px 16px;display:flex;flex-direction:column"><span style="font-weight:600">Shipped</span><span style="font-size:12px">22 Sep</span></div><div style="background:var(--color-bg);padding:14px 16px;display:flex;flex-direction:column;color:var(--color-neutral-700)"><span style="font-weight:600">Delivered</span><span style="font-size:12px">Est. 25 Sep</span></div></div></div>
+<table class="table" style="font-size:15px"><thead><tr><th>Order</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>
+<sc-for list="{{ orders }}" as="o" hint-placeholder-count="4"><tr><td style="padding:14px 8px;font-weight:600">{{ o.no }}</td><td style="padding:14px 8px">{{ o.date }}</td><td style="padding:14px 8px">{{ o.items }}</td><td style="padding:14px 8px">{{ o.total }}</td><td style="padding:14px 8px"><span class="{{ o.tagClass }}">{{ o.status }}</span></td><td style="padding:14px 8px;text-align:right"><a href="#" style="text-decoration:underline">{{ o.action }}</a></td></tr></sc-for>
+</tbody></table>
+</div>
+</div>
+</div>
+<div class="dv-card" style="width:390px;height:844px">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:20px">CRATE</span><div style="display:flex;gap:16px"><span>Search</span><span>Bag 2</span><span>Menu</span></div></div>
+<div style="padding:16px;display:flex;flex-direction:column;gap:4px"><h1 style="margin:0;font-size:40px;letter-spacing:-.04em">Hi, Sam</h1></div>
+<div style="display:flex;gap:6px;padding:0 16px 16px;font-size:13px;border-bottom:2px solid var(--color-divider)"><span style="padding:6px 12px;background:var(--color-accent);color:var(--color-bg)">Orders</span><span style="padding:6px 12px;border:1px solid var(--color-divider)">Wishlist</span><span style="padding:6px 12px;border:1px solid var(--color-divider)">Addresses</span><span style="padding:6px 12px;border:1px solid var(--color-divider)">Details</span></div>
+<div style="padding:16px;display:flex;flex-direction:column;gap:10px;border-bottom:2px solid var(--color-divider)"><span style="font-size:14px"><b>#CR-20931</b> · Arrives Thu 25 Sep</span><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px"><span style="height:6px;background:var(--color-text)"></span><span style="height:6px;background:var(--color-text)"></span><span style="height:6px;background:var(--color-accent)"></span><span style="height:6px;background:var(--color-neutral-300)"></span></div><div style="display:grid;grid-template-columns:repeat(4,1fr);font-size:11px"><span>Ordered</span><span>Packed</span><span style="font-weight:600">Shipped</span><span style="color:var(--color-neutral-700)">Delivered</span></div><a href="#" class="btn btn-secondary" style="height:44px;justify-content:space-between;padding:0 14px;margin-top:4px"><span>Track parcel</span><span>→</span></a></div>
+<sc-for list="{{ orders }}" as="o" hint-placeholder-count="4"><div style="display:grid;grid-template-columns:1fr auto;gap:4px;padding:14px 16px;border-bottom:1px solid var(--color-divider)"><span style="font-weight:600;font-size:15px">{{ o.no }}</span><span style="font-size:15px">{{ o.total }}</span><span style="font-size:12px;color:var(--color-neutral-700)">{{ o.date }} · {{ o.items }}</span><span class="{{ o.tagClass }}" style="justify-self:end">{{ o.status }}</span></div></sc-for>
+</div>
+</div></div>
+
+<div class="dv-opt" id="2l"><div class="dv-olabel"><a class="dv-oid" href="#2l">2l</a>Account · Poster, membership up front</div>
+<div style="display:flex;gap:24px;align-items:flex-start">
+<div class="dv-card" style="width:1280px">
+<div style="display:grid;grid-template-columns:auto 1fr auto;gap:48px;align-items:center;padding:18px 32px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:22px;letter-spacing:-.02em">CRATE</span><div style="display:flex;gap:24px"><a href="#">New</a><a href="#">Tops</a><a href="#">Bottoms</a><a href="#">Outerwear</a><a href="#">Accessories</a></div><div style="display:flex;gap:24px"><a href="#">Search</a><a href="#" style="color:var(--color-accent)">Account</a><a href="#">Bag (2)</a></div></div>
+<div style="background:var(--color-accent);color:var(--color-bg);display:grid;grid-template-columns:repeat(12,1fr);height:380px">
+<div style="grid-column:span 8;padding:32px;display:flex;flex-direction:column;justify-content:space-between"><span style="font-size:15px;font-weight:600">Member No. 004 213 · since 2024</span><span style="font-weight:800;font-size:180px;line-height:.8;letter-spacing:-.06em">SAM O.</span></div>
+<div style="grid-column:span 4;padding:32px;display:flex;flex-direction:column;justify-content:space-between;border-left:2px solid color-mix(in srgb, var(--color-bg) 50%, transparent)"><div style="display:flex;flex-direction:column"><span style="font-weight:800;font-size:72px;line-height:.9;letter-spacing:-.04em">1,240</span><span style="font-size:15px;font-weight:600">points · 260 to Inner Circle</span></div><div style="height:8px;background:color-mix(in srgb, var(--color-bg) 35%, transparent)"><div style="width:83%;height:8px;background:var(--color-bg)"></div></div></div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--color-divider);border-bottom:2px solid var(--color-divider)">
+<div style="background:var(--color-bg);padding:24px 32px;display:flex;flex-direction:column;gap:6px"><span style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-accent-700);font-weight:600">Early access</span><span style="font-weight:800;font-size:24px">Drop 08 opens for you Fri 09:30</span></div>
+<div style="background:var(--color-bg);padding:24px 32px;display:flex;flex-direction:column;gap:6px"><span style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-accent-700);font-weight:600">In transit</span><span style="font-weight:800;font-size:24px">#CR-20931 arrives Thu 25 Sep</span></div>
+<div style="background:var(--color-bg);padding:24px 32px;display:flex;flex-direction:column;gap:6px"><span style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-accent-700);font-weight:600">Wishlist</span><span style="font-weight:800;font-size:24px">2 of 6 saved pieces back in stock</span></div>
+</div>
+<div style="padding:28px 32px 12px;display:flex;justify-content:space-between;align-items:baseline"><h2 style="margin:0;font-size:32px">Orders</h2><div style="display:flex;gap:24px;font-size:14px"><a href="#">Addresses</a><a href="#">Details</a><a href="#">Log out</a></div></div>
+<div style="border-top:2px solid var(--color-divider)"><sc-for list="{{ orders }}" as="o" hint-placeholder-count="4"><div style="display:grid;grid-template-columns:240px 200px 1fr 140px 120px;align-items:center;padding:0 32px;height:64px;border-bottom:1px solid var(--color-divider);font-size:15px" style-hover="background:var(--color-surface)"><span style="font-weight:800;font-size:20px">{{ o.no }}</span><span>{{ o.date }}</span><span>{{ o.items }}</span><span><span class="{{ o.tagClass }}">{{ o.status }}</span></span><span style="text-align:right">{{ o.total }}</span></div></sc-for></div>
+<div style="height:24px"></div>
+</div>
+<div class="dv-card" style="width:390px;height:844px">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:20px">CRATE</span><div style="display:flex;gap:16px"><span>Search</span><span>Bag 2</span><span>Menu</span></div></div>
+<div style="background:var(--color-accent);color:var(--color-bg);padding:16px;height:300px;display:flex;flex-direction:column;justify-content:space-between"><span style="font-size:14px;font-weight:600">Member No. 004 213</span><span style="font-weight:800;font-size:96px;line-height:.8;letter-spacing:-.06em">SAM O.</span><div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:14px;font-weight:600">1,240 pts · 260 to Inner Circle</span><div style="height:6px;background:color-mix(in srgb, var(--color-bg) 35%, transparent)"><div style="width:83%;height:6px;background:var(--color-bg)"></div></div></div></div>
+<div style="padding:16px;border-bottom:2px solid var(--color-divider);display:flex;flex-direction:column;gap:4px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-accent-700);font-weight:600">Early access</span><span style="font-weight:800;font-size:20px">Drop 08 opens for you Fri 09:30</span></div>
+<div style="padding:16px 16px 8px"><span style="font-weight:800;font-size:22px">Orders</span></div>
+<sc-for list="{{ orders }}" as="o" hint-placeholder-count="4"><div style="display:grid;grid-template-columns:1fr auto;gap:4px;padding:12px 16px;border-top:1px solid var(--color-divider)"><span style="font-weight:800;font-size:16px">{{ o.no }}</span><span style="font-size:15px">{{ o.total }}</span><span style="font-size:12px;color:var(--color-neutral-700)">{{ o.date }}</span><span class="{{ o.tagClass }}" style="justify-self:end">{{ o.status }}</span></div></sc-for>
+</div>
+</div></div>
+</div>
+
+<div class="dv-screen">07 Search</div>
+<div class="dv-opts">
+<div class="dv-opt" id="2m"><div class="dv-olabel"><a class="dv-oid" href="#2m">2m</a>Search · Grid overlay, suggestions while typing</div>
+<div style="display:flex;gap:24px;align-items:flex-start">
+<div class="dv-card" style="width:1280px">
+<div style="display:grid;grid-template-columns:auto 1fr auto;gap:48px;align-items:center;padding:18px 32px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:22px;letter-spacing:-.02em">CRATE</span><div style="display:flex;gap:24px"><a href="#">New</a><a href="#">Tops</a><a href="#">Bottoms</a><a href="#">Outerwear</a><a href="#">Accessories</a></div><div style="display:flex;gap:24px"><a href="#" style="color:var(--color-accent)">Search</a><a href="#">Account</a><a href="#">Bag (2)</a></div></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:20px 32px;border-bottom:2px solid var(--color-divider)"><span style="font-weight:800;font-size:56px;letter-spacing:-.04em;line-height:1">carg<span style="color:var(--color-accent)">|</span></span><span style="font-size:14px">Esc to close</span></div>
+<div style="display:grid;grid-template-columns:repeat(12,1fr)">
+<div style="grid-column:span 3;border-right:2px solid var(--color-divider);padding:24px 32px;display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;flex-direction:column;gap:10px;font-size:16px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700)">Suggestions</span><a href="#"><b>carg</b>o short</a><a href="#"><b>carg</b>o pant</a><a href="#">ripstop <b>carg</b>o</a><a href="#"><b>carg</b>o in Outerwear</a></div>
+<div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700)">Trending</span><div style="display:flex;flex-wrap:wrap;gap:6px;font-size:13px"><sc-for list="{{ trending }}" as="t" hint-placeholder-count="5"><span style="padding:6px 12px;border:1px solid var(--color-divider)">{{ t }}</span></sc-for></div></div>
+</div>
+<div style="grid-column:span 9">
+<div style="display:flex;justify-content:space-between;padding:16px 24px;font-size:14px;border-bottom:2px solid var(--color-divider)"><span>Products · 14</span><a href="#" style="text-decoration:underline">See all results →</a></div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--color-divider)"><sc-for list="{{ s2m }}" as="p" hint-placeholder-count="4"><div style="background:var(--color-bg);padding:16px;display:flex;flex-direction:column;gap:10px"><div class="grayscale" style="position:relative;aspect-ratio:3/4;background:var(--color-surface)"><image-slot id="{{ p.id }}" shape="rect" placeholder="product shot" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div><div style="display:flex;justify-content:space-between;font-size:14px;gap:8px"><span style="font-weight:600">{{ p.name }}</span><span>{{ p.price }}</span></div></div></sc-for></div>
+</div>
+</div>
+</div>
+<div class="dv-card" style="width:390px;height:844px">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:2px solid var(--color-divider)"><span style="font-weight:800;font-size:32px;letter-spacing:-.03em">carg<span style="color:var(--color-accent)">|</span></span><span style="font-size:14px">Cancel</span></div>
+<div style="padding:16px;display:flex;flex-direction:column;gap:12px;font-size:17px;border-bottom:2px solid var(--color-divider)"><a href="#"><b>carg</b>o short</a><a href="#"><b>carg</b>o pant</a><a href="#">ripstop <b>carg</b>o</a></div>
+<div style="padding:16px;display:flex;flex-direction:column;gap:10px;border-bottom:2px solid var(--color-divider)"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700)">Trending</span><div style="display:flex;flex-wrap:wrap;gap:6px;font-size:13px"><sc-for list="{{ trending }}" as="t" hint-placeholder-count="5"><span style="padding:6px 12px;border:1px solid var(--color-divider)">{{ t }}</span></sc-for></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--color-divider)"><sc-for list="{{ s2mM }}" as="p" hint-placeholder-count="4"><div style="background:var(--color-bg);padding:10px;display:flex;flex-direction:column;gap:8px"><div class="grayscale" style="position:relative;aspect-ratio:1/1;background:var(--color-surface)"><image-slot id="{{ p.id }}" shape="rect" placeholder="product" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div><div style="display:flex;justify-content:space-between;font-size:13px;gap:8px"><span style="font-weight:600">{{ p.name }}</span><span>{{ p.price }}</span></div></div></sc-for></div>
+</div>
+</div></div>
+
+<div class="dv-opt" id="2n"><div class="dv-olabel"><a class="dv-oid" href="#2n">2n</a>Search · Poster results page</div>
+<div style="display:flex;gap:24px;align-items:flex-start">
+<div class="dv-card" style="width:1280px">
+<div style="display:grid;grid-template-columns:auto 1fr auto;gap:48px;align-items:center;padding:18px 32px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:22px;letter-spacing:-.02em">CRATE</span><div style="display:flex;gap:24px"><a href="#">New</a><a href="#">Tops</a><a href="#">Bottoms</a><a href="#">Outerwear</a><a href="#">Accessories</a></div><div style="display:flex;gap:24px"><a href="#" style="color:var(--color-accent)">Search</a><a href="#">Account</a><a href="#">Bag (2)</a></div></div>
+<div style="background:var(--color-accent);color:var(--color-bg);padding:24px 32px;display:flex;justify-content:space-between;align-items:flex-end"><span style="font-weight:800;font-size:180px;line-height:.8;letter-spacing:-.06em">“CARGO”</span><span style="font-size:15px;font-weight:600">14 results</span></div>
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:2px;background:var(--color-divider);border-bottom:2px solid var(--color-divider);font-size:14px"><div style="background:var(--color-text);color:var(--color-bg);padding:14px 16px">All 14</div><div style="background:var(--color-bg);padding:14px 16px">Bottoms 9</div><div style="background:var(--color-bg);padding:14px 16px">Outerwear 3</div><div style="background:var(--color-bg);padding:14px 16px">Accessories 2</div><div style="background:var(--color-bg);padding:14px 16px;display:flex;justify-content:space-between"><span>Sort: Relevance</span><span>↓</span></div></div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--color-divider)"><sc-for list="{{ s2n }}" as="p" hint-placeholder-count="8"><div style="background:var(--color-bg);padding:16px;display:flex;flex-direction:column;gap:10px"><div class="grayscale" style="position:relative;aspect-ratio:3/4;background:var(--color-surface)"><image-slot id="{{ p.id }}" shape="rect" placeholder="product shot" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div><div style="display:flex;justify-content:space-between;font-size:14px;gap:8px"><span style="font-weight:800;font-size:18px;letter-spacing:-.01em">{{ p.name }}</span><span>{{ p.price }}</span></div></div></sc-for></div>
+</div>
+<div class="dv-card" style="width:390px;height:844px">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:2px solid var(--color-divider);font-size:14px"><span style="font-weight:800;font-size:20px">CRATE</span><div style="display:flex;gap:16px"><span>Search</span><span>Bag 2</span><span>Menu</span></div></div>
+<div style="background:var(--color-accent);color:var(--color-bg);padding:16px;display:flex;flex-direction:column;gap:8px"><span style="font-weight:800;font-size:88px;line-height:.8;letter-spacing:-.06em">“CARGO”</span><span style="font-size:14px;font-weight:600">14 results</span></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--color-divider);border-bottom:2px solid var(--color-divider);font-size:14px"><div style="background:var(--color-bg);padding:14px 16px">Filter +</div><div style="background:var(--color-bg);padding:14px 16px">Sort: Relevance ↓</div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--color-divider)"><sc-for list="{{ s2nM }}" as="p" hint-placeholder-count="4"><div style="background:var(--color-bg);padding:10px;display:flex;flex-direction:column;gap:8px"><div class="grayscale" style="position:relative;aspect-ratio:3/4;background:var(--color-surface)"><image-slot id="{{ p.id }}" shape="rect" placeholder="product" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div><div style="display:flex;justify-content:space-between;font-size:13px;gap:8px"><span style="font-weight:800">{{ p.name }}</span><span>{{ p.price }}</span></div></div></sc-for></div>
+</div>
+</div></div>
+</div>
+<p class="dv-next">Try next: "mix <a class="dv-oid" href="#2b">2b</a>'s countdown into <a class="dv-oid" href="#2a">2a</a>" · "use the <a class="dv-oid" href="#2d">2d</a> index as a Grid/Index toggle on <a class="dv-oid" href="#2c">2c</a>" · "make it a clickable prototype"</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;colorPhotos&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Wear carousel&quot;},&quot;rotateSeconds&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:3,&quot;min&quot;:2,&quot;max&quot;:8,&quot;step&quot;:0.5,&quot;unit&quot;:&quot;s&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Wear carousel&quot;}}">
+class Component extends DCLogic {
+  orders() {
+    const cls = { 'In transit': 'tag tag-accent', 'Delivered': 'tag tag-neutral', 'Returned': 'tag tag-outline' };
+    const act = { 'In transit': 'Track', 'Delivered': 'Reorder', 'Returned': 'View' };
+    return [
+      ['#CR-20931', '19 Sep 2026', '2 items', '$213.00', 'In transit'],
+      ['#CR-19884', '02 Aug 2026', '1 item', '$120.00', 'Delivered'],
+      ['#CR-18302', '14 Jun 2026', '3 items', '$244.00', 'Delivered'],
+      ['#CR-17755', '30 Apr 2026', '1 item', '$78.00', 'Returned']
+    ].map(([no, date, items, total, status]) => ({ no, date, items, total, status, tagClass: cls[status], action: act[status] }));
+  }
+  componentDidMount() { this._tick(); }
+  componentWillUnmount() { clearTimeout(this._wt); }
+  _tick() {
+    clearTimeout(this._wt);
+    const sec = Math.max(1.5, +(this.props.rotateSeconds ?? 3));
+    this._wt = setTimeout(() => { if ((this.state || {}).wearPlay !== false) this.setState(s => ({ wi: ((s && s.wi) || 0) + 1 })); this._tick(); }, sec * 1000);
+  }
+  wearVals() {
+    const s = this.state || {};
+    const G = [['Nylon Track Jacket', '$165'], ['Racing Crew', '$110'], ['480gsm Hoodie', '$120'], ['Moto Bomber', '$210'], ['Puffer Vest', '$190'], ['Fleece Quarter-Zip', '$110']];
+    const n = G.length, idx = (((s.wi || 0) % n) + n) % n;
+    const topPct = s.wTop ?? 17, scalePct = s.wScale ?? 78, xPct = s.wX ?? 0;
+    const build = (mw, mh, mTop, side) => G.map(([name, price], i) => {
+      const rel = (i - idx + n) % n, pos = rel === 0 ? 0 : rel === 1 ? 1 : rel === n - 1 ? -1 : (rel <= n / 2 ? 2 : -2);
+      const w = mw * scalePct / 100, h = w * 1.05;
+      const cx = xPct / 100 * mw;
+      return { id: 'wear-g' + i, name, ph: 'garment PNG ' + (i + 1),
+        top: (mTop + mh * topPct / 100) + 'px', w: w + 'px', h: h + 'px', ml: (-w / 2 + cx) + 'px',
+        tf: `translateX(${pos * side}px) scale(${pos === 0 ? 1 : 0.82})`,
+        op: pos === 0 ? 1 : Math.abs(pos) === 1 ? 0.28 : 0, blur: pos === 0 ? 'none' : 'blur(3px)',
+        z: pos === 0 ? 3 : 1, pe: pos === 0 ? 'auto' : 'none', cellBg: i === idx ? 'var(--color-accent-100)' : 'var(--color-bg)' };
+    });
+    return {
+      imgClass: this.props.colorPhotos ? '' : 'grayscale',
+      wearD: build(440, 660, 40, 420), wearM: build(280, 420, 16, 250),
+      curName: G[idx][0], curPrice: G[idx][1],
+      wearCounter: String(idx + 1).padStart(2, '0') + ' / ' + String(n).padStart(2, '0'),
+      wearDots: G.map((_, i) => ({ w: i === idx ? '28px' : '10px', bg: i === idx ? 'var(--color-text)' : 'var(--color-neutral-300)', pick: () => this.setState({ wi: i }) })),
+      wearPrev: () => this.setState({ wi: idx - 1 + n }), wearNext: () => this.setState({ wi: idx + 1 }),
+      wearToggle: () => this.setState({ wearPlay: s.wearPlay === false }), wearPlayLabel: s.wearPlay === false ? 'Play' : 'Pause',
+      wearTopPct: topPct, wearScalePct: scalePct, wearXPct: xPct,
+      onWearTop: e => this.setState({ wTop: +e.target.value }), onWearScale: e => this.setState({ wScale: +e.target.value }), onWearX: e => this.setState({ wX: +e.target.value })
+    };
+  }
+  authVals() {
+    const s = this.state || {};
+    const role = s.role ?? 'guest', aTab = s.aTab ?? 'products', preview = !!s.preview;
+    const prods = s.prods ?? [
+      { id: 1, name: 'Boxy Heavy Tee', price: '$48', stock: '120', live: true },
+      { id: 2, name: 'Double-Knee Carpenter', price: '$128', stock: '64', live: true },
+      { id: 3, name: 'Nylon Track Jacket', price: '$165', stock: '9', live: true },
+      { id: 4, name: '480gsm Hoodie', price: '$120', stock: '48', live: true },
+      { id: 5, name: 'Puffer Vest', price: '$190', stock: '0', live: false }
+    ];
+    const secs = s.secs ?? [
+      { k: 'hero', l: 'Hero campaign', d: 'Image, headline, button', on: true },
+      { k: 'countdown', l: 'Drop countdown', d: 'Red banner with timer', on: true },
+      { k: 'grid', l: 'Latest products', d: 'Live products, 4 per row', on: true },
+      { k: 'cats', l: 'Category tiles', d: 'Tops, Bottoms, Outerwear, Accessories', on: false },
+      { k: 'news', l: 'Newsletter', d: 'Drop alert sign-up', on: true }
+    ];
+    const bag = s.bag ?? {};
+    const upd = (id, patch) => this.setState({ prods: prods.map(p => p.id === id ? { ...p, ...patch } : p), dirty: true });
+    const mv = (i, d) => { const j = i + d; if (j < 0 || j >= secs.length) return; const a = secs.slice(); [a[i], a[j]] = [a[j], a[i]]; this.setState({ secs: a, dirty: true }); };
+    const on = { bg: 'var(--color-text)', fg: 'var(--color-bg)' }, off = { bg: 'var(--color-bg)', fg: 'var(--color-text)' };
+    const email = s.email ?? 'sam@example.com';
+    const live = prods.filter(p => p.live);
+    const bagCount = Object.values(bag).reduce((a, b) => a + b, 0);
+    return {
+      loginEmail: email, onEmail: e => this.setState({ email: e.target.value }),
+      signIn: () => this.setState({ role: /admin|crate\.store/i.test(email) ? 'admin' : 'customer', preview: false }),
+      asCustomer: () => this.setState({ role: 'customer', email: 'sam@example.com', preview: false }),
+      asAdmin: () => this.setState({ role: 'admin', email: 'admin@crate.store', preview: false }),
+      signOut: () => this.setState({ role: 'guest', preview: false }),
+      custBg: role === 'customer' ? on.bg : off.bg, custFg: role === 'customer' ? on.fg : off.fg,
+      admBg: role === 'admin' ? on.bg : off.bg, admFg: role === 'admin' ? on.fg : off.fg,
+      roleLabel: role === 'admin' ? 'Admin' : role === 'customer' ? 'Customer' : 'Guest (not signed in)',
+      isAdmin: role === 'admin' && !preview, isShopper: role !== 'admin' || preview, previewing: role === 'admin' && preview,
+      previewStore: () => this.setState({ preview: true }), backToAdmin: () => this.setState({ preview: false }),
+      shopperGreeting: role === 'guest' ? 'Guest' : role === 'admin' ? 'Admin' : 'Hi, Sam', authAction: role === 'guest' ? 'Sign in' : 'Sign out',
+      bagCount, liveCount: live.length,
+      draftNote: s.dirty ? 'Unpublished changes' : 'All changes published',
+      publish: () => this.setState({ dirty: false }),
+      adminTabs: [['products', 'Products', prods.length], ['site', 'Site sections', secs.filter(x => x.on).length + '/' + secs.length], ['orders', 'Orders', 4], ['users', 'Users & roles', 3]].map(([k, l, n]) => ({ l, n, pick: () => this.setState({ aTab: k }), ...(k === aTab ? { bg: 'var(--color-accent)', fg: 'var(--color-bg)', fw: 600 } : { ...off, fw: 400 }) })),
+      tabProducts: aTab === 'products', tabSite: aTab === 'site', tabOrders: aTab === 'orders', tabUsers: aTab === 'users',
+      adminProducts: prods.map(p => ({ ...p, imgId: 'prod-' + p.id,
+        onName: e => upd(p.id, { name: e.target.value }), onPrice: e => upd(p.id, { price: e.target.value }), onStock: e => upd(p.id, { stock: e.target.value }),
+        toggle: () => upd(p.id, { live: !p.live }), status: p.live ? 'Live' : 'Hidden', tagClass: p.live ? 'tag tag-accent' : 'tag tag-outline',
+        remove: () => this.setState({ prods: prods.filter(x => x.id !== p.id), dirty: true }) })),
+      addProduct: () => { const id = Math.max(0, ...prods.map(p => p.id)) + 1; this.setState({ prods: [{ id, name: 'New product', price: '$0', stock: '0', live: false }, ...prods], dirty: true, aTab: 'products' }); },
+      sectionRows: secs.map((x, i) => ({ ...x, no: String(i + 1).padStart(2, '0'), op: x.on ? 1 : 0.5, up: () => mv(i, -1), down: () => mv(i, 1),
+        toggle: () => this.setState({ secs: secs.map((y, j) => j === i ? { ...y, on: !y.on } : y), dirty: true }), state: x.on ? 'Shown' : 'Hidden', ...(x.on ? on : off) })),
+      heroTitle: s.heroTitle ?? 'CONCRETE SEASON', heroKicker: s.heroKicker ?? 'Drop 07 / Out now', heroCta: s.heroCta ?? 'Shop the drop',
+      onHero: e => this.setState({ heroTitle: e.target.value, dirty: true }), onKicker: e => this.setState({ heroKicker: e.target.value, dirty: true }), onCta: e => this.setState({ heroCta: e.target.value, dirty: true }),
+      liveSections: secs.filter(x => x.on).map(x => ({ isHero: x.k === 'hero', isCountdown: x.k === 'countdown', isGrid: x.k === 'grid', isCats: x.k === 'cats', isNews: x.k === 'news' })),
+      shopProducts: live.slice(0, 4).map(p => ({ ...p, imgId: 'prod-' + p.id, addLabel: bag[p.id] ? `In bag (${bag[p.id]})` : 'Add to bag',
+        add: () => role === 'guest' ? this.setState({ role: 'guest' }) : this.setState({ bag: { ...bag, [p.id]: (bag[p.id] || 0) + 1 } }) })),
+      users: [{ name: 'Sam Okafor', email: 'sam@example.com', role: 'Customer', cls: 'tag tag-neutral' }, { name: 'Lina Haddad', email: 'lina@example.com', role: 'Customer', cls: 'tag tag-neutral' }, { name: 'Crate Team', email: 'admin@crate.store', role: 'Admin', cls: 'tag tag-accent' }]
+    };
+  }
+  fitVals() {
+    const s = this.state || {};
+    const h = s.h ?? 178, w = s.w ?? 74, g = s.g ?? 0, view = s.view ?? 'front', tab = s.tab ?? 'fit';
+    const set = o => () => this.setState(o);
+    const SZ = ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+    const chart = [['S','46','92–96','78–82','170–175'],['M','48','96–100','82–86','175–180'],['L','50','100–105','86–91','180–185'],['XL','52','105–110','91–96','185–190'],['XXL','54','110–115','96–102','185–190'],['XXXL','56–58','116–123','103–109','190–195']];
+    const bmi = w / ((h / 100) ** 2);
+    const hIdx = h < 175 ? 0 : h < 180 ? 1 : h < 185 ? 2 : h < 190 ? 3 : 5;
+    let rec = Math.min(hIdx, 4); if (bmi > 27) rec++; if (bmi > 31) rec++; if (bmi < 19.5) rec--;
+    rec = Math.max(0, Math.min(5, rec));
+    const size = s.size ?? rec;
+    const cl = (v, a, b) => Math.max(a, Math.min(b, v));
+    const sy = 0.86 + (h - 150) / 50 * 0.16, sx = cl(0.78 + (bmi - 18) * 0.035, 0.78, 1.35), vx = view === 'side' ? 0.55 : 1;
+    const G = [
+      { name: 'Nylon Track Jacket', short: 'Track Jacket', price: '$165', fill: 'var(--color-text)', det: 'var(--color-neutral-500)', oy: 120,
+        path: 'M56 80 Q100 68 144 80 C156 90 158 104 158 120 L164 236 L148 238 L138 128 L138 210 L62 210 L62 128 L52 238 L36 236 L42 120 C42 104 44 90 56 80 Z', detail: 'M100 76 L100 210 M62 196 L138 196' },
+      { name: 'Boxy Heavy Tee', short: 'Heavy Tee', price: '$48', fill: 'var(--color-neutral-100)', det: 'var(--color-neutral-400)', oy: 120,
+        path: 'M56 80 Q100 68 144 80 L162 118 L146 126 L138 108 L138 204 L62 204 L62 108 L54 126 L38 118 Z', detail: 'M88 76 Q100 88 112 76' },
+      { name: '480gsm Hoodie', short: 'Hoodie', price: '$120', fill: 'var(--color-neutral-500)', det: 'var(--color-neutral-800)', oy: 120,
+        path: 'M56 80 Q100 68 144 80 C156 90 158 104 158 120 L164 236 L148 238 L138 128 L138 212 L62 212 L62 128 L52 238 L36 236 L42 120 C42 104 44 90 56 80 Z', detail: 'M76 160 L124 160 L130 196 L70 196 Z M84 76 Q100 96 116 76' },
+      { name: 'Double-Knee Carpenter', short: 'Carpenter', price: '$128', fill: 'var(--color-neutral-700)', det: 'var(--color-neutral-400)', oy: 200, bottom: true,
+        path: 'M62 196 L138 196 L138 420 L104 420 L100 234 L96 420 L62 420 Z', detail: 'M66 300 L94 300 L94 350 L66 350 Z M106 300 L134 300 L134 350 L106 350 Z' }
+    ];
+    const gar = G[g], diff = size - rec, gx = 1.03 + diff * 0.06, gy = 1 + (size - hIdx) * 0.02;
+    const verdict = diff <= -1 ? 'Tight' : diff === 0 ? 'True to size' : diff === 1 ? 'Relaxed' : 'Oversized';
+    const lvl = d => cl(2 + d, 0, 4);
+    const bar = d => [0, 1, 2, 3, 4].map(i => i === lvl(d) ? (Math.abs(d) >= 2 ? 'var(--color-accent)' : 'var(--color-text)') : 'var(--color-neutral-200)');
+    const word = (d, t) => d <= -2 ? 'Too ' + t[0] : d === -1 ? t[1] : d === 0 ? 'Right' : d === 1 ? t[2] : 'Too ' + t[3];
+    const chestD = diff, waistD = diff + (bmi > 26 ? -1 : 0), lenD = size - Math.min(hIdx, 5), shD = diff + (sx > 1.1 ? -1 : 0);
+    const zones = gar.bottom
+      ? [{ k: 'Waist', d: waistD, t: ['tight', 'Snug', 'Loose', 'loose'] }, { k: 'Hips', d: diff, t: ['tight', 'Snug', 'Roomy', 'loose'] }, { k: 'Thigh', d: diff, t: ['tight', 'Snug', 'Roomy', 'loose'] }, { k: 'Leg length', d: lenD, t: ['short', 'Cropped', 'Stacked', 'long'] }]
+      : [{ k: 'Shoulders', d: shD, t: ['tight', 'Snug', 'Dropped', 'wide'] }, { k: 'Chest', d: chestD, t: ['tight', 'Snug', 'Roomy', 'loose'] }, { k: 'Waist', d: waistD, t: ['tight', 'Snug', 'Roomy', 'loose'] }, { k: 'Length', d: lenD, t: ['short', 'Cropped', 'Long', 'long'] }];
+    const on = { bg: 'var(--color-text)', fg: 'var(--color-bg)' }, off = { bg: 'var(--color-bg)', fg: 'var(--color-text)' };
+    return {
+      h, w, isFit: tab === 'fit', isGuide: tab === 'guide',
+      tabFit: set({ tab: 'fit' }), tabGuide: set({ tab: 'guide' }),
+      guideBg: tab === 'guide' ? 'var(--color-accent)' : 'var(--color-bg)', guideFg: tab === 'guide' ? 'var(--color-bg)' : 'var(--color-text)',
+      fitBg: tab === 'fit' ? 'var(--color-accent)' : 'var(--color-bg)', fitFg: tab === 'fit' ? 'var(--color-bg)' : 'var(--color-text)',
+      onH: e => this.setState({ h: +e.target.value, size: undefined }), onW: e => this.setState({ w: +e.target.value, size: undefined }),
+      garments: G.map((x, i) => ({ name: x.name, short: x.short, price: x.price, pick: set({ g: i }), ...(i === g ? on : off) })),
+      sizeBtns: SZ.map((l, i) => ({ l, mark: i === rec ? 'FOR YOU' : '', pick: set({ size: i }), ...(i === size ? on : i === rec ? { bg: 'var(--color-accent-100)', fg: 'var(--color-accent-800)' } : off) })),
+      views: [['front', 'Front'], ['side', 'Side'], ['back', 'Back']].map(([k, l]) => ({ l, pick: set({ view: k }), ...(k === view ? on : off) })),
+      recLabel: SZ[rec], sizeLabel: SZ[size], gName: gar.name, showFace: view === 'front',
+      bodyT: `translate(100 62) scale(${(sx * vx).toFixed(3)} ${sy.toFixed(3)}) translate(-100 -62)`,
+      garmentT: `translate(100 ${gar.oy}) scale(${gx.toFixed(3)} ${gy.toFixed(3)}) translate(-100 -${gar.oy})`,
+      gPath: gar.path, gFill: gar.fill, gDetail: view === 'back' ? '' : gar.detail, gDetailStroke: gar.det,
+      shadowRx: Math.round(46 * sx * vx),
+      verdict, verdictBg: Math.abs(diff) >= 2 || diff < 0 ? 'var(--color-accent)' : 'var(--color-text)', verdictFg: 'var(--color-bg)',
+      zones: zones.map(z => ({ k: z.k, v: word(z.d, z.t), bar: bar(z.d) })),
+      useRec: set({ size: undefined }),
+      row: { bust: chart[size][2], waist: chart[size][3], height: chart[size][4] },
+      chartRows: chart.map((r, i) => ({ size: r[0], eu: r[1], bust: r[2], waist: r[3], height: r[4], pick: set({ size: i }), ...(i === size ? { bg: 'var(--color-accent-100)', fg: 'var(--color-text)' } : off) }))
+    };
+  }
+  renderVals() {
+    const P = [
+      { name: 'Boxy Heavy Tee', price: '$48', cw: '4 colourways', tag: 'New', sizes: 'XS–XXL' },
+      { name: 'Double-Knee Carpenter', price: '$128', cw: '3 colourways', tag: '', sizes: '28–38' },
+      { name: 'Nylon Track Jacket', price: '$165', cw: '2 colourways', tag: 'Low stock', sizes: 'S–XL' },
+      { name: '480gsm Hoodie', price: '$120', cw: '5 colourways', tag: '', sizes: 'XS–XXL' },
+      { name: 'Ripstop Cargo Short', price: '$78', cw: '3 colourways', tag: 'New', sizes: '28–36' },
+      { name: 'Puffer Vest', price: '$190', cw: '2 colourways', tag: '', sizes: 'S–XL' },
+      { name: 'Fleece Quarter-Zip', price: '$110', cw: '3 colourways', tag: '', sizes: 'M–XL' },
+      { name: '5-Panel Cap', price: '$38', cw: '6 colourways', tag: 'Sold out', sizes: 'One size' }
+    ];
+    const L = (k, n = 8, off = 0) => P.slice(off, off + n).map((p, i) => ({ ...p, id: `${k}-${i}`, no: String(i + off + 1).padStart(2, '0'), hasTag: !!p.tag, rowBg: 'transparent', rowFg: 'inherit' }));
+    const idx = L('c2d', 8); idx[2] = { ...idx[2], rowBg: 'var(--color-accent)', rowFg: 'var(--color-bg)' };
+    return {
+      ...this.fitVals(),
+      ...this.authVals(),
+      ...this.wearVals(),
+      h2aD: L('h2a', 4), h2aM: L('h2am', 4), h2bD: L('h2b', 5, 1),
+      c2cD: L('c2c', 8), c2cM: L('c2cm', 4), c2dD: idx, c2dM: L('c2dm', 8),
+      cats: [{ no: '01', name: 'Tops', count: '64' }, { no: '02', name: 'Bottoms', count: '38' }, { no: '03', name: 'Outerwear', count: '21' }, { no: '04', name: 'Accessories', count: '46' }],
+      filters: [{ k: 'Type', v: 'All' }, { k: 'Size', v: 'M, L' }, { k: 'Colour', v: 'Any' }, { k: 'Price', v: 'Any' }, { k: 'Drop', v: '07' }, { k: 'Sort', v: 'Newest' }],
+      p2eThumbs: L('p2e', 4, 0),
+      related: L('rel', 4, 3),
+      cartItems: [
+        { id: 'cart-0', name: 'Nylon Track Jacket', meta: 'Black · M', price: '$165', qty: '1' },
+        { id: 'cart-1', name: 'Boxy Heavy Tee', meta: 'Bone · L', price: '$48', qty: '1' }
+      ],
+      orders: this.orders(),
+      _o: [
+        { no: '#CR-20931', date: '19 Sep 2026', items: '2 items', total: '$213.00', status: 'In transit', active: true },
+        { no: '#CR-19884', date: '02 Aug 2026', items: '1 item', total: '$120.00', status: 'Delivered', active: false },
+        { no: '#CR-18302', date: '14 Jun 2026', items: '3 items', total: '$244.00', status: 'Delivered', active: false },
+        { no: '#CR-17755', date: '30 Apr 2026', items: '1 item', total: '$78.00', status: 'Returned', active: false }
+      ],
+      trending: ['cargo', 'track jacket', 'heavyweight tee', 'puffer', 'drop 08'],
+      s2m: L('s2m', 4, 1), s2mM: L('s2mm', 4, 1),
+      s2n: L('s2n', 8), s2nM: L('s2nm', 4)
+    };
+  }
+}
+</script>
+</body>
+</html>

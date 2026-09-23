@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"><style>body{margin:0;background:#ecebe7;font-family:'Schibsted Grotesk',Helvetica,sans-serif;color:#1b1a18}a{color:#1b1a18;text-decoration:none}a:hover{color:oklch(0.55 0.13 45)}.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08)}.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px}.dv-tname{font:600 13px/1.2 system-ui,sans-serif}.dv-opts{display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start}.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px}.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px}.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 system-ui,sans-serif;color:rgba(0,0,0,.55)}.dv-card{background:#faf9f6;border:1px solid rgba(0,0,0,.08);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);overflow:hidden}.dv-next{margin:22px 0 0;font:12px/1.5 system-ui,sans-serif;color:rgba(0,0,0,.5)}</style></helmet>
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Crate — core shopping flow (desktop, 1280)</span></div>
+<p style="margin:-8px 0 24px;max-width:720px;font-size:13px;line-height:1.5;color:#5c5a55">Assumptions: Crate sells everyday unisex basics. The look is warm off-white with near-black type, one terracotta accent, and mono labels for utility text. Every image is a placeholder.</p>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1a"><div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Home</div>
+<div class="dv-card" style="width:1280px">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:22px 48px;border-bottom:1px solid #e3e1dc">
+<div style="display:flex;gap:28px;font-size:14px"><a href="#">Women</a><a href="#">Men</a><a href="#">Essentials</a><a href="#">Journal</a></div>
+<div style="font-weight:700;font-size:22px;letter-spacing:.32em">CRATE</div>
+<div style="display:flex;gap:24px;font-size:14px"><a href="#">Search</a><a href="#">Account</a><a href="#">Bag (2)</a></div>
+</div>
+<div style="display:grid;grid-template-columns:1.3fr 1fr;height:640px">
+<div style="background:repeating-linear-gradient(135deg,#e2dfd8 0 10px,#dcd8d0 10px 20px);display:flex;align-items:flex-end;padding:24px;font:12px 'IBM Plex Mono',monospace;color:#77736b">hero campaign image — model in outerwear</div>
+<div style="display:flex;flex-direction:column;justify-content:space-between;padding:56px 56px 48px">
+<div style="font:500 12px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:oklch(0.55 0.13 45)">AUTUMN 26 · DROP 03</div>
+<div style="display:flex;flex-direction:column;gap:24px">
+<h1 style="margin:0;font-size:76px;line-height:.95;font-weight:600;letter-spacing:-.03em;text-wrap:balance">Layers for the in-between.</h1>
+<p style="margin:0;font-size:17px;line-height:1.5;color:#5c5a55;max-width:380px">Heavyweight cotton, brushed wool and waxed canvas, cut to be worn every day.</p>
+<div style="display:flex;gap:12px"><a href="#" style="background:#1b1a18;color:#faf9f6;padding:15px 28px;font-size:14px;font-weight:500">Shop the drop</a><a href="#" style="border:1px solid #1b1a18;padding:14px 28px;font-size:14px;font-weight:500">Lookbook</a></div>
+</div>
+</div>
+</div>
+<div style="padding:72px 48px 32px;display:flex;justify-content:space-between;align-items:baseline"><h2 style="margin:0;font-size:32px;font-weight:600;letter-spacing:-.02em">New this week</h2><a href="#" style="font-size:14px;border-bottom:1px solid">View all 48</a></div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px;padding:0 48px 72px">
+<sc-for list="{{ newIn }}" as="p" hint-placeholder-count="4">
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="aspect-ratio:3/4;background:repeating-linear-gradient(135deg,#e8e5df 0 10px,#e2dfd8 10px 20px);display:flex;align-items:flex-end;padding:12px;font:11px 'IBM Plex Mono',monospace;color:#8a867e">product shot</div>
+<div style="display:flex;justify-content:space-between;font-size:14px"><span style="font-weight:500">{{ p.name }}</span><span>{{ p.price }}</span></div>
+<div style="font:12px 'IBM Plex Mono',monospace;color:#77736b;margin-top:-6px">{{ p.colors }}</div>
+</div>
+</sc-for>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding:0 48px 72px">
+<sc-for list="{{ cats }}" as="c" hint-placeholder-count="3">
+<a href="#" style="position:relative;aspect-ratio:4/5;background:repeating-linear-gradient(135deg,#dedbd3 0 10px,#d8d4cb 10px 20px);display:flex;flex-direction:column;justify-content:space-between;padding:24px">
+<span style="font:11px 'IBM Plex Mono',monospace;color:#77736b">category image</span>
+<span style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:28px;font-weight:600;letter-spacing:-.02em">{{ c.name }}</span><span style="font:12px 'IBM Plex Mono',monospace">{{ c.count }} →</span></span>
+</a>
+</sc-for>
+</div>
+<div style="background:#1b1a18;color:#faf9f6;padding:48px;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:end">
+<div style="display:flex;flex-direction:column;gap:10px"><div style="font-size:28px;font-weight:600;letter-spacing:-.02em">Get 10% off your first order.</div><div style="font-size:14px;color:#b5b1a8">New drops and restocks. About twice a month.</div></div>
+<div style="display:flex;border-bottom:1px solid #faf9f6;padding-bottom:10px;justify-content:space-between;font-size:15px"><span style="color:#b5b1a8">Email address</span><span>Subscribe →</span></div>
+</div>
+</div></div>
+
+<div class="dv-opt" id="1b"><div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Category grid</div>
+<div class="dv-card" style="width:1280px">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:22px 48px;border-bottom:1px solid #e3e1dc">
+<div style="display:flex;gap:28px;font-size:14px"><a href="#" style="font-weight:600">Women</a><a href="#">Men</a><a href="#">Essentials</a><a href="#">Journal</a></div>
+<div style="font-weight:700;font-size:22px;letter-spacing:.32em">CRATE</div>
+<div style="display:flex;gap:24px;font-size:14px"><a href="#">Search</a><a href="#">Account</a><a href="#">Bag (2)</a></div>
+</div>
+<div style="padding:40px 48px 24px;display:flex;flex-direction:column;gap:12px">
+<div style="font:12px 'IBM Plex Mono',monospace;color:#77736b">Women / Knitwear</div>
+<div style="display:flex;justify-content:space-between;align-items:baseline"><h1 style="margin:0;font-size:52px;font-weight:600;letter-spacing:-.03em">Knitwear</h1><span style="font:12px 'IBM Plex Mono',monospace;color:#77736b">24 items</span></div>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 48px;border-top:1px solid #e3e1dc;border-bottom:1px solid #e3e1dc;font-size:13px;position:sticky;top:0">
+<div style="display:flex;gap:8px">
+<sc-for list="{{ chips }}" as="ch" hint-placeholder-count="5"><span style="padding:8px 14px;border:1px solid {{ ch.border }};background:{{ ch.bg }};color:{{ ch.fg }};border-radius:999px">{{ ch.label }}</span></sc-for>
+</div>
+<div style="display:flex;gap:24px"><span>Filter +</span><span>Sort: Newest ↓</span></div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:32px 20px;padding:32px 48px 56px">
+<sc-for list="{{ grid }}" as="p" hint-placeholder-count="8">
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="position:relative;aspect-ratio:3/4;background:repeating-linear-gradient(135deg,#e8e5df 0 10px,#e2dfd8 10px 20px);display:flex;align-items:flex-end;padding:12px;font:11px 'IBM Plex Mono',monospace;color:#8a867e">product shot
+<sc-if value="{{ p.tag }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:12px;left:12px;background:#faf9f6;color:#1b1a18;padding:4px 8px;font:500 11px 'IBM Plex Mono',monospace">{{ p.tag }}</span></sc-if>
+</div>
+<div style="display:flex;justify-content:space-between;font-size:14px"><span style="font-weight:500">{{ p.name }}</span><span>{{ p.price }}</span></div>
+<div style="display:flex;gap:6px;margin-top:-4px"><sc-for list="{{ p.sw }}" as="s"><span style="width:12px;height:12px;border-radius:50%;background:{{ s }};border:1px solid rgba(0,0,0,.12)"></span></sc-for></div>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:0 0 64px"><span style="font:12px 'IBM Plex Mono',monospace;color:#77736b">Showing 8 of 24</span><a href="#" style="border:1px solid #1b1a18;padding:14px 40px;font-size:14px;font-weight:500">Load more</a></div>
+</div></div>
+
+<div class="dv-opt" id="1c"><div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Product detail</div>
+<div class="dv-card" style="width:1280px">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:22px 48px;border-bottom:1px solid #e3e1dc">
+<div style="display:flex;gap:28px;font-size:14px"><a href="#" style="font-weight:600">Women</a><a href="#">Men</a><a href="#">Essentials</a><a href="#">Journal</a></div>
+<div style="font-weight:700;font-size:22px;letter-spacing:.32em">CRATE</div>
+<div style="display:flex;gap:24px;font-size:14px"><a href="#">Search</a><a href="#">Account</a><a href="#">Bag (2)</a></div>
+</div>
+<div style="display:grid;grid-template-columns:1.4fr 1fr;gap:56px;padding:32px 48px 72px">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div style="grid-column:span 2;aspect-ratio:4/3;background:repeating-linear-gradient(135deg,#e2dfd8 0 10px,#dcd8d0 10px 20px);display:flex;align-items:flex-end;padding:16px;font:11px 'IBM Plex Mono',monospace;color:#77736b">on-model, front</div>
+<div style="aspect-ratio:3/4;background:repeating-linear-gradient(135deg,#e8e5df 0 10px,#e2dfd8 10px 20px);display:flex;align-items:flex-end;padding:16px;font:11px 'IBM Plex Mono',monospace;color:#8a867e">back view</div>
+<div style="aspect-ratio:3/4;background:repeating-linear-gradient(135deg,#e8e5df 0 10px,#e2dfd8 10px 20px);display:flex;align-items:flex-end;padding:16px;font:11px 'IBM Plex Mono',monospace;color:#8a867e">knit texture close-up</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:28px;padding-top:8px">
+<div style="font:12px 'IBM Plex Mono',monospace;color:#77736b">Women / Knitwear</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<h1 style="margin:0;font-size:40px;font-weight:600;letter-spacing:-.025em;line-height:1.05">Merino Crew Sweater</h1>
+<div style="display:flex;gap:14px;align-items:baseline;font-size:20px"><span>$128</span><span style="font:12px 'IBM Plex Mono',monospace;color:#77736b">★ 4.8 · 212 reviews</span></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;font-size:13px"><span>Colour: <b style="font-weight:600">Oat</b></span></div>
+<div style="display:flex;gap:10px">
+<sc-for list="{{ pdpColors }}" as="c" hint-placeholder-count="4"><span style="width:34px;height:34px;border-radius:50%;background:{{ c.hex }};outline:1px solid {{ c.ring }};outline-offset:3px;border:1px solid rgba(0,0,0,.1)"></span></sc-for>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;font-size:13px"><span>Size</span><a href="#" style="border-bottom:1px solid">Size guide</a></div>
+<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px">
+<sc-for list="{{ sizes }}" as="s" hint-placeholder-count="6"><span style="height:48px;display:flex;align-items:center;justify-content:center;font-size:14px;border:1px solid {{ s.border }};background:{{ s.bg }};color:{{ s.fg }};text-decoration:{{ s.strike }}">{{ s.l }}</span></sc-for>
+</div>
+<div style="font:12px 'IBM Plex Mono',monospace;color:oklch(0.55 0.13 45)">Only 2 left in M</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<a href="#" style="background:#1b1a18;color:#faf9f6;height:56px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500">Add to bag — $128</a>
+<div style="font-size:13px;color:#5c5a55;text-align:center">Free shipping over $150 · Free 30-day returns</div>
+</div>
+<div style="display:flex;flex-direction:column;border-top:1px solid #e3e1dc">
+<sc-for list="{{ accordions }}" as="a" hint-placeholder-count="3"><div style="display:flex;flex-direction:column;gap:10px;padding:18px 0;border-bottom:1px solid #e3e1dc"><div style="display:flex;justify-content:space-between;font-size:14px;font-weight:500"><span>{{ a.t }}</span><span>{{ a.icon }}</span></div><sc-if value="{{ a.body }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font-size:14px;line-height:1.55;color:#5c5a55">{{ a.body }}</p></sc-if></div></sc-for>
+</div>
+</div>
+</div>
+</div></div>
+
+<div class="dv-opt" id="1d"><div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Cart</div>
+<div class="dv-card" style="width:1280px">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:22px 48px;border-bottom:1px solid #e3e1dc">
+<div style="display:flex;gap:28px;font-size:14px"><a href="#">Women</a><a href="#">Men</a><a href="#">Essentials</a><a href="#">Journal</a></div>
+<div style="font-weight:700;font-size:22px;letter-spacing:.32em">CRATE</div>
+<div style="display:flex;gap:24px;font-size:14px"><a href="#">Search</a><a href="#">Account</a><a href="#" style="font-weight:600">Bag (2)</a></div>
+</div>
+<div style="display:grid;grid-template-columns:1.6fr 1fr;gap:64px;padding:48px 48px 80px">
+<div style="display:flex;flex-direction:column;gap:24px">
+<h1 style="margin:0;font-size:44px;font-weight:600;letter-spacing:-.03em">Your bag</h1>
+<div style="display:flex;flex-direction:column;gap:10px;padding:16px 20px;background:#f0eee9">
+<div style="font-size:14px">You're <b style="font-weight:600">$22</b> away from free shipping.</div>
+<div style="height:4px;background:#dcd8d0"><div style="width:85%;height:4px;background:oklch(0.55 0.13 45)"></div></div>
+</div>
+<div style="display:flex;flex-direction:column;border-top:1px solid #e3e1dc">
+<sc-for list="{{ cart }}" as="i" hint-placeholder-count="2">
+<div style="display:grid;grid-template-columns:120px 1fr auto;gap:24px;padding:24px 0;border-bottom:1px solid #e3e1dc">
+<div style="aspect-ratio:3/4;background:repeating-linear-gradient(135deg,#e8e5df 0 8px,#e2dfd8 8px 16px);display:flex;align-items:flex-end;padding:8px;font:10px 'IBM Plex Mono',monospace;color:#8a867e">product</div>
+<div style="display:flex;flex-direction:column;justify-content:space-between">
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:16px;font-weight:500">{{ i.name }}</span><span style="font:12px 'IBM Plex Mono',monospace;color:#77736b">{{ i.meta }}</span></div>
+<div style="display:flex;gap:20px;align-items:center;font-size:13px">
+<div style="display:flex;align-items:center;border:1px solid #cfcbc3"><span style="width:36px;height:36px;display:flex;align-items:center;justify-content:center">−</span><span style="width:28px;text-align:center">{{ i.qty }}</span><span style="width:36px;height:36px;display:flex;align-items:center;justify-content:center">+</span></div>
+<a href="#" style="border-bottom:1px solid">Remove</a><a href="#" style="border-bottom:1px solid">Save for later</a>
+</div>
+</div>
+<div style="font-size:16px">{{ i.price }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:20px;padding:28px;background:#f0eee9;align-self:start">
+<div style="font-size:18px;font-weight:600">Summary</div>
+<div style="display:flex;flex-direction:column;gap:12px;font-size:14px">
+<div style="display:flex;justify-content:space-between"><span>Subtotal</span><span>$128.00</span></div>
+<div style="display:flex;justify-content:space-between"><span>Shipping</span><span>$8.00</span></div>
+<div style="display:flex;justify-content:space-between;color:#5c5a55"><span>Tax</span><span>Calculated at checkout</span></div>
+</div>
+<div style="display:flex;justify-content:space-between;border:1px solid #cfcbc3;background:#faf9f6;padding:14px 16px;font-size:14px"><span style="color:#77736b">Promo code</span><span style="font-weight:500">Apply</span></div>
+<div style="display:flex;justify-content:space-between;border-top:1px solid #cfcbc3;padding-top:16px;font-size:20px;font-weight:600"><span>Total</span><span>$136.00</span></div>
+<a href="#" style="background:#1b1a18;color:#faf9f6;height:56px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500">Checkout</a>
+<div style="font:12px 'IBM Plex Mono',monospace;color:#77736b;text-align:center">Card · Apple Pay · PayPal · Klarna</div>
+</div>
+</div>
+</div></div>
+
+</div>
+<p class="dv-next">Try next: "add mobile versions of <a class="dv-oid" href="#1a">1a</a>–<a class="dv-oid" href="#1d">1d</a>" · "a bolder, editorial home to set beside <a class="dv-oid" href="#1a">1a</a>" · "add checkout + order confirmation"</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const on = { border: '#1b1a18', bg: '#1b1a18', fg: '#faf9f6' }, off = { border: '#cfcbc3', bg: 'transparent', fg: '#1b1a18' };
+    const oat = '#d9ccb4', char = '#3a3936', rust = '#a0543a', navy = '#2b3446', cream = '#efe8da', moss = '#5d6446';
+    return {
+      newIn: [
+        { name: 'Heavyweight Tee', price: '$42', colors: '5 colours' },
+        { name: 'Waxed Chore Jacket', price: '$210', colors: '2 colours' },
+        { name: 'Merino Crew Sweater', price: '$128', colors: '4 colours' },
+        { name: 'Pleated Wide Trouser', price: '$118', colors: '3 colours' }
+      ],
+      cats: [{ name: 'Outerwear', count: 18 }, { name: 'Knitwear', count: 24 }, { name: 'Essentials', count: 36 }],
+      chips: [{ label: 'All', ...on }, { label: 'Crewnecks', ...off }, { label: 'Cardigans', ...off }, { label: 'Vests', ...off }, { label: 'Turtlenecks', ...off }],
+      grid: [
+        { name: 'Merino Crew Sweater', price: '$128', tag: 'New', sw: [oat, char, rust, navy] },
+        { name: 'Ribbed Turtleneck', price: '$96', tag: '', sw: [cream, char] },
+        { name: 'Chunky Cardigan', price: '$168', tag: 'Low stock', sw: [oat, moss] },
+        { name: 'Cashmere Vest', price: '$145', tag: '', sw: [char, navy, cream] },
+        { name: 'Boxy Knit Polo', price: '$110', tag: 'New', sw: [cream, rust] },
+        { name: 'Fisherman Crew', price: '$152', tag: '', sw: [cream, navy] },
+        { name: 'Fine-Gauge Cardigan', price: '$120', tag: '', sw: [char, oat, moss] },
+        { name: 'Alpaca Blend Crew', price: '$138', tag: '', sw: [rust, oat] }
+      ],
+      pdpColors: [oat, char, rust, navy].map((hex, i) => ({ hex, ring: i === 0 ? '#1b1a18' : 'transparent' })),
+      sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(l => l === 'M' ? { l, ...on, strike: 'none' } : l === 'XXL' ? { l, border: '#e3e1dc', bg: 'transparent', fg: '#b5b1a8', strike: 'line-through' } : { l, ...off, strike: 'none' }),
+      accordions: [
+        { t: 'Details & fit', icon: '−', body: 'Relaxed fit with a dropped shoulder. The model is 5\'9" and wears size S. Knitted from 100% extra-fine merino at 12 gauge.' },
+        { t: 'Care', icon: '+', body: '' },
+        { t: 'Shipping & returns', icon: '+', body: '' }
+      ],
+      cart: [
+        { name: 'Merino Crew Sweater', meta: 'Oat · M', qty: 1, price: '$128' },
+        { name: 'Heavyweight Tee', meta: 'Charcoal · M · Saved from wishlist', qty: 0, price: '—' }
+      ].slice(0, 1).concat([{ name: 'Heavyweight Tee', meta: 'Charcoal · M', qty: 1, price: 'Free gift' }])
+    };
+  }
+}
+</script>
+</body>
+</html>
