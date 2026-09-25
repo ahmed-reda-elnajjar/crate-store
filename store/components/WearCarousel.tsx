@@ -420,12 +420,12 @@ function WearTools({ wear, products, garments, idx, onPick, onEdit }: { wear: We
           </select>
         </div>
         <div className="fit-for"><span className="label">Fit on photo</span><b>{cur?.name ?? "—"}</b></div>
-        <span className="muted" style={{ fontSize: 12 }}>On the photo: drag the garment to move it, drag the red corner or scroll to resize, the dark right and bottom handles to stretch its width or height. Arrow keys nudge, + and − resize (hold Shift for bigger steps).</span>
+        <span className="muted" style={{ fontSize: 12 }}>On the photo: drag the garment to move it, drag the red corner or scroll to resize, the red handles on its right and bottom edges to stretch its width or height (or type the numbers below). Arrow keys nudge, + and − resize (hold Shift for bigger steps).</span>
         <label className="slider"><span className="t"><span>{wear.aligned ? "Up / down" : "Collar position"}</span><b>{f.topPct}%</b></span><input type="range" min={r.top[0]} max={r.top[1]} step={0.5} value={f.topPct} onChange={(e) => setFit({ topPct: +e.target.value })} /></label>
         <label className="slider"><span className="t"><span>{wear.aligned ? "Size" : "Garment width"}</span><b>{f.scalePct}%</b></span><input type="range" min={r.scale[0]} max={r.scale[1]} step={0.5} value={f.scalePct} onChange={(e) => setFit({ scalePct: +e.target.value })} /></label>
         <label className="slider"><span className="t"><span>Side-to-side</span><b>{f.xPct}</b></span><input type="range" min={r.x[0]} max={r.x[1]} step={0.5} value={f.xPct} onChange={(e) => setFit({ xPct: +e.target.value })} /></label>
-        <label className="slider"><span className="t"><span>Stretch width</span><b>{f.wPct ?? 100}%</b></span><input type="range" min={40} max={250} step={1} value={f.wPct ?? 100} onChange={(e) => setFit({ wPct: +e.target.value })} /></label>
-        <label className="slider"><span className="t"><span>Stretch height</span><b>{f.hPct ?? 100}%</b></span><input type="range" min={40} max={250} step={1} value={f.hPct ?? 100} onChange={(e) => setFit({ hPct: +e.target.value })} /></label>
+        <label className="slider"><span className="t"><span>Stretch width</span><PctBox label="Garment width" value={f.wPct ?? 100} min={40} max={250} onCommit={(v) => setFit({ wPct: v })} /></span><input type="range" min={40} max={250} step={1} value={f.wPct ?? 100} onChange={(e) => setFit({ wPct: +e.target.value })} /></label>
+        <label className="slider"><span className="t"><span>Stretch height</span><PctBox label="Garment height" value={f.hPct ?? 100} min={40} max={250} onCommit={(v) => setFit({ hPct: v })} /></span><input type="range" min={40} max={250} step={1} value={f.hPct ?? 100} onChange={(e) => setFit({ hPct: +e.target.value })} /></label>
         {!wear.aligned && (
           <label className="slider"><span className="t"><span>Neck opening</span><b>{f.neck ? `${f.neck}%` : "Off"}</b></span><input type="range" min={0} max={60} value={f.neck ?? 0} onChange={(e) => setFit({ neck: +e.target.value })} /></label>
         )}
@@ -434,8 +434,8 @@ function WearTools({ wear, products, garments, idx, onPick, onEdit }: { wear: We
           {own && <button className="btn btn-ghost h32" onClick={reset}>Reset</button>}
         </div>
         <span className="label" style={{ marginTop: 8 }}>Model photo size</span>
-        <label className="slider"><span className="t"><span>Height</span><b>{frame.h}%</b></span><input type="range" min={50} max={170} step={1} value={frame.h} onChange={(e) => (onEdit(), saveFrame(wear, { h: +e.target.value }))} /></label>
-        <label className="slider"><span className="t"><span>Width</span><b>{frame.w}%</b></span><input type="range" min={40} max={220} step={1} value={frame.w} onChange={(e) => (onEdit(), saveFrame(wear, { w: +e.target.value }))} /></label>
+        <label className="slider"><span className="t"><span>Height</span><PctBox label="Photo height" value={frame.h} min={50} max={170} onCommit={(v) => (onEdit(), saveFrame(wear, { h: v }))} /></span><input type="range" min={50} max={170} step={1} value={frame.h} onChange={(e) => (onEdit(), saveFrame(wear, { h: +e.target.value }))} /></label>
+        <label className="slider"><span className="t"><span>Width</span><PctBox label="Photo width" value={frame.w} min={40} max={220} onCommit={(v) => (onEdit(), saveFrame(wear, { w: v }))} /></span><input type="range" min={40} max={220} step={1} value={frame.w} onChange={(e) => (onEdit(), saveFrame(wear, { w: +e.target.value }))} /></label>
         {Math.abs(frame.w - 100) > 0.5 && (
           <div className="field">
             <label htmlFor="wear-fill">When the width doesn&rsquo;t match the photo</label>
@@ -489,5 +489,30 @@ function WearTools({ wear, products, garments, idx, onPick, onEdit }: { wear: We
         </span>
       </div>
     </div>
+  );
+}
+
+/** Type an exact percentage; applies on Enter or when the box loses focus. */
+function PctBox({ value, min, max, label, onCommit }: { value: number; min: number; max: number; label: string; onCommit: (v: number) => void }) {
+  const [text, setText] = useState(String(value));
+  useEffect(() => setText(String(value)), [value]);
+  const commit = () => {
+    const n = Number(text.replace(",", "."));
+    if (Number.isFinite(n) && text.trim() !== "") onCommit(Math.min(max, Math.max(min, n)));
+    else setText(String(value));
+  };
+  return (
+    <span className="pct-box">
+      <input
+        className="input num"
+        inputMode="decimal"
+        aria-label={`${label} (%)`}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => e.key === "Enter" && (e.currentTarget as HTMLInputElement).blur()}
+      />
+      %
+    </span>
   );
 }

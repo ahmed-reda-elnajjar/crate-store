@@ -765,3 +765,5 @@ button { font: inherit; color: inherit; }
 .frame-handle.s { width: 44px; height: 10px; margin-left: -22px; margin-top: -5px; cursor: ns-resize; }
 .frame-handle:hover, .frame-handle.on { background: var(--color-accent); }
 .frame-box { position: absolute; z-index: 4; outline: 1px dashed var(--color-neutral-500); pointer-events: none; }
+.pct-box { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; }
+.pct-box .input { width: 64px; height: 28px; padding: 0 6px; text-align: right; font-weight: 700; }
