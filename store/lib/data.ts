@@ -147,6 +147,9 @@ export interface WearFit {
   xPct: number;
   /** Neck opening cut out of the collar, as % of the garment width (0 = none). */
   neck?: number;
+  /** Stretch the garment photo on its own: width and height as % (100 = the photo's shape). */
+  wPct?: number;
+  hPct?: number;
 }
 
 export interface WearSettings extends WearFit {
