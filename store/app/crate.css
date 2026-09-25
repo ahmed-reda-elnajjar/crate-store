@@ -511,6 +511,38 @@ button { font: inherit; color: inherit; }
 .zone .bar span { height: 6px; }
 .fit-res .cta { margin-top: auto; padding: 20px 24px; border-top: 2px solid var(--color-divider); display: flex; flex-direction: column; gap: 8px; }
 .zones-m { display: none; }
+.zone .t > span:last-child { text-align: right; }
+.fit-ctl .why { margin: 0; font-size: 13px; line-height: 1.4; }
+
+/* Body measurements: fit room (collapsible) and account fit profile. */
+.measures-d > summary { cursor: pointer; display: flex; justify-content: space-between; gap: 8px; font-size: 14px; font-weight: 600; list-style: none; padding: 8px 0; border-top: 1px solid var(--color-divider); border-bottom: 1px solid var(--color-divider); }
+.measures-d > summary::-webkit-details-marker { display: none; }
+.measures-d > summary::after { content: "▾"; font-weight: 400; }
+.measures-d[open] > summary::after { content: "▴"; }
+.measures-d > summary .muted { font-weight: 400; font-size: 12px; margin-left: auto; }
+.measures-d[open] > .measures { padding-top: 12px; }
+.measures { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+.measure { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.measure > label { display: flex; justify-content: space-between; gap: 6px; font-size: 12px; color: var(--color-neutral-700); cursor: help; }
+.measure .est { font-size: 11px; color: var(--color-neutral-500); }
+.measure button.est { text-decoration: underline; color: var(--color-accent-700); }
+.measure .cm { display: grid; grid-template-columns: 1fr auto; align-items: center; border: 1px solid var(--color-divider); background: var(--color-surface); }
+.measure .cm:focus-within { border-color: var(--color-accent); }
+.measure .cm.err { border-color: var(--color-accent); }
+.measure .cm .input { border: 0; min-height: 36px; background: transparent; outline: 0; }
+.measure .cm .input::placeholder { color: var(--color-neutral-500); }
+.measure .cm > span { padding: 0 10px; font-size: 12px; color: var(--color-neutral-700); }
+.measure .err-t { font-size: 11px; color: var(--color-accent-700); }
+
+/* Admin: garment measurements under a product row. */
+.mpanel { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 12px; margin-top: 10px; padding: 16px; background: var(--color-surface); border-top: 2px solid var(--color-divider); }
+.mpanel-top { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-end; }
+.mpanel-top .field { display: flex; flex-direction: column; min-width: 180px; }
+.mpanel .flabel { display: block; font-size: 12px; margin-bottom: 5px; color: color-mix(in srgb, var(--color-text) 70%, transparent); }
+.mpanel .seg { background: var(--color-bg); }
+.mtable th { font-size: 11px; white-space: nowrap; }
+.mtable td { padding: 4px 4px; }
+.mtable .input.num { width: 76px; height: 36px; background: var(--color-bg); }
 .guide-l { grid-column: span 5; border-right: 2px solid var(--color-divider); position: relative; padding: 24px; overflow: hidden; }
 .stretch { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; font-size: 13px; }
 .stretch span { border-top: 4px solid var(--color-neutral-300); padding-top: 6px; }

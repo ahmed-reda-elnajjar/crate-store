@@ -4,11 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ImageSlot, productImg } from "@/components/ImageSlot";
-import { CATEGORIES, type CategoryKey, type Product } from "@/lib/data";
+import { BOTTOM_MEASURES, CATEGORIES, FIT_STYLES, TOP_MEASURES, isBottom, type CategoryKey, type FitShape, type FitStyle, type Product } from "@/lib/data";
 import { longDate, money2 } from "@/lib/format";
 import {
   addProduct, discardDraft, isDirty, moveSection, publish, removeProduct, signOut, stockLeft,
-  toast, toggleSection, updateHero, updateProduct, useHydrated, useStore,
+  toast, toggleSection, updateHero, updateMeasurement, updateProduct, useHydrated, useStore,
 } from "@/lib/store";
 
 type Tab = "products" | "site" | "orders" | "users";
@@ -112,6 +112,7 @@ function withTotal(p: Product, total: number): Record<string, number> {
 }
 
 function Products({ products }: { products: Product[] }) {
+  const [specs, setSpecs] = useState<string | null>(null);
   return (
     <div className="pane">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
@@ -129,16 +130,101 @@ function Products({ products }: { products: Product[] }) {
                 {CATEGORIES.map((c) => <option key={c.key} value={c.key}>{c.name}</option>)}
               </select>
               <Link href={`/product/${p.id}`} className="u" style={{ fontSize: 12 }}>Photos &amp; page →</Link>
+              {(p.shape || p.category !== "accessories") && (
+                <button className="unbtn u" style={{ fontSize: 12 }} aria-expanded={specs === p.id} onClick={() => setSpecs(specs === p.id ? null : p.id)}>
+                  Measurements {specs === p.id ? "▴" : "▾"}
+                </button>
+              )}
             </div>
           </div>
           <NumInput label="Price" prefix="$" value={p.price} onCommit={(price) => updateProduct(p.id, { price })} />
           <NumInput label="Stock" value={stockLeft(p)} onCommit={(n) => updateProduct(p.id, { stock: withTotal(p, n) })} />
           <button className={p.live ? "tag tag-accent" : "tag tag-outline"} onClick={() => updateProduct(p.id, { live: !p.live })} aria-pressed={p.live} title="Show or hide in the store">{p.live ? "Live" : "Hidden"}</button>
           <button className="unbtn u" style={{ fontSize: 13 }} onClick={() => window.confirm(`Delete ${p.name}?`) && removeProduct(p.id)}>Delete</button>
+          {specs === p.id && <Measurements p={p} />}
         </div>
       ))}
-      <span className="muted" style={{ fontSize: 12 }}>Photos save straight away. Names, prices, stock and visibility go live when you publish. Open a product page to add its other gallery photos.</span>
+      <span className="muted" style={{ fontSize: 12 }}>Photos save straight away. Names, prices, stock, visibility and measurements go live when you publish. Open a product page to add its other gallery photos.</span>
     </div>
+  );
+}
+
+const SHAPES: { k: FitShape; l: string }[] = [{ k: "tee", l: "Tee" }, { k: "hoodie", l: "Hoodie / sweat" }, { k: "jacket", l: "Jacket / vest" }, { k: "pants", l: "Trousers / shorts" }];
+
+/** Garment spec editor: sizes × flat measurements, plus the cut the fit engine aims for. */
+function Measurements({ p }: { p: Product }) {
+  const cols = isBottom(p) ? BOTTOM_MEASURES : TOP_MEASURES;
+  const missing = p.sizes.filter((z) => !cols.some((c) => p.measurements?.[z]?.[c.k])).length;
+  return (
+    <div className="mpanel">
+      <div className="mpanel-top">
+        <div className="field">
+          <label htmlFor={`shape-${p.id}`}>Drawn as</label>
+          <select id={`shape-${p.id}`} className="input h44" value={p.shape ?? ""} onChange={(e) => updateProduct(p.id, { shape: (e.target.value || undefined) as FitShape | undefined })}>
+            {!p.shape && <option value="">Choose…</option>}
+            {SHAPES.map((x) => <option key={x.k} value={x.k}>{x.l}</option>)}
+          </select>
+        </div>
+        <div className="field">
+          <span className="flabel">Cut</span>
+          <div className="seg" role="radiogroup" aria-label="Cut">
+            {FIT_STYLES.map((f) => (
+              <label key={f} className="seg-opt">
+                <input type="radio" name={`style-${p.id}`} checked={(p.fitStyle ?? "regular") === f} onChange={() => updateProduct(p.id, { fitStyle: f as FitStyle })} />
+                <span>{f[0].toUpperCase() + f.slice(1)}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="table-wrap">
+        <table className="table mtable">
+          <thead><tr><th>Size</th>{cols.map((c) => <th key={c.k}>{c.l}</th>)}</tr></thead>
+          <tbody>
+            {p.sizes.map((z) => (
+              <tr key={z}>
+                <td style={{ fontWeight: 700 }}>{z}</td>
+                {cols.map((c) => (
+                  <td key={c.k}>
+                    <CmInput label={`${p.name} ${z} ${c.l}`} value={p.measurements?.[z]?.[c.k]} onCommit={(v) => updateMeasurement(p.id, z, c.k, v)} />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <span className="muted" style={{ fontSize: 12 }}>
+        {isBottom(p)
+          ? "Lay the garment flat, in cm. Waist straight across the top of the waistband, hip 18 cm below it, thigh 2 cm below the crotch. Inseam crotch to hem; rise crotch seam to top of waistband, front."
+          : "Lay the garment flat, in cm. Chest 2 cm below the armpits, waist and hem straight across, length from the high shoulder point to the hem, sleeve from the shoulder seam to the cuff. Leave sleeve empty for sleeveless pieces."}
+        {missing > 0 && <b style={{ color: "var(--color-accent-700)" }}> {missing} size{missing > 1 ? "s have" : " has"} no measurements, so the fit room can’t check {missing > 1 ? "them" : "it"}.</b>}
+      </span>
+    </div>
+  );
+}
+
+/** Measurement cell: empty clears the value, anything else must be a positive number. */
+function CmInput({ value, onCommit, label }: { value?: number; onCommit: (n: number | undefined) => void; label: string }) {
+  const [text, setText] = useState(value === undefined ? "" : String(value));
+  useEffect(() => setText((t) => (t.trim() === "" ? undefined : Number(t.replace(",", "."))) === value ? t : value === undefined ? "" : String(value)), [value]);
+  const n = Number(text.replace(",", "."));
+  const bad = text.trim() !== "" && !(Number.isFinite(n) && n > 0 && n < 300);
+  return (
+    <input
+      className={`input num ${bad ? "err" : ""}`}
+      aria-label={label}
+      aria-invalid={bad}
+      inputMode="decimal"
+      value={text}
+      onChange={(e) => {
+        const t = e.target.value;
+        setText(t);
+        const v = Number(t.replace(",", "."));
+        if (t.trim() === "") onCommit(undefined);
+        else if (Number.isFinite(v) && v > 0 && v < 300) onCommit(Math.round(v * 10) / 10);
+      }}
+    />
   );
 }
 
