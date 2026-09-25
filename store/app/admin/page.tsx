@@ -121,7 +121,7 @@ function Products({ products }: { products: Product[] }) {
       <div className="prow head"><span>Photo</span><span>Name</span><span>Price</span><span>Stock</span><span>Status</span><span /></div>
       {products.map((p) => (
         <div className="prow" key={p.id}>
-          <div className="ph grayscale"><ImageSlot id={productImg(p.id)} placeholder="drop photo" editable alt={p.name} /></div>
+          <div className="ph grayscale"><ImageSlot id={productImg(p.id)} src={p.photo} placeholder="drop photo" editable alt={p.name} /></div>
           <div className="nmcol">
             <input className="input" style={{ fontWeight: 600 }} aria-label="Name" value={p.name} onChange={(e) => updateProduct(p.id, { name: e.target.value })} />
             <div style={{ display: "flex", gap: 12, alignItems: "center" }}>

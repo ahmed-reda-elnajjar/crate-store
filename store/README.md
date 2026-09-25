@@ -47,3 +47,20 @@ Nothing here is a real server yet:
 - Sign-in accepts any password, and the role comes from the email. **A real backend must check passwords and roles on the server.** Hiding `/admin` in the browser is not access control.
 - Admin edits to text, prices, stock, sections and carousel settings are saved as a draft, and customers see them only after **Publish**. Photo uploads go live straight away.
 - Payments are not taken.
+
+## Photo try-on (fit room → 03 Real try-on)
+
+Customers can see a photorealistic image of themselves (from a full-body photo) or of the CRATE model wearing 1–3 store pieces (one each of bottoms, tops and outerwear, applied in that order). They can save looks and compare up to three side by side. The 02 tab still decides the size; this tab shows the look and the colours.
+
+1. Copy `.env.example` to `.env.local` and set one provider:
+   - `TRYON_PROVIDER=fashn` with `FASHN_API_KEY` ([FASHN try-on v1.6](https://docs.fashn.ai/api-reference/tryon-v1-6)), or
+   - `TRYON_PROVIDER=replicate` with `REPLICATE_API_TOKEN` (IDM-VTON), or
+   - `TRYON_PROVIDER=mock` to test the UI without a key (the photo comes back unchanged).
+2. Restart `npm run dev`. On Vercel, add the same variables under Project → Settings → Environment Variables.
+
+How it works:
+- `app/api/tryon/route.ts` receives the photo and garment images (downscaled to ≤1024px in the browser) and calls the provider in `lib/tryon/provider.ts`. Keys stay on the server.
+- Only signed-in customers can use it, after ticking a consent box. Each visitor gets `TRYON_DAILY_LIMIT` looks per day. The counter is in memory, so move it to a database for production.
+- The store keeps nothing on the server. The customer's photo, generated images and saved looks stay in their browser (IndexedDB), and "Delete my photos and looks" removes them. The provider's own retention policy still applies to images sent to it.
+- A repeat of the same photo and pieces comes from the browser cache and doesn't use the daily limit.
+- Pieces need a product photo: a built-in one (`public/products`) or one an admin uploads in Admin → Products.

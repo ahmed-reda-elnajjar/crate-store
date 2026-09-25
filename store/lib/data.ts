@@ -20,6 +20,8 @@ export interface Product {
   fabric: string;
   fit: string;
   shape?: FitShape;
+  /** Built-in product photo (public/products), shown until an admin uploads one. */
+  photo?: string;
   live: boolean;
   /** Higher = newer; used for "Newest" sort. */
   added: number;
@@ -37,14 +39,14 @@ const APPAREL = ["S", "M", "L", "XL", "XXL"];
 export const SEED_PRODUCTS: Product[] = [
   { id: "boxy-heavy-tee", name: "Boxy Heavy Tee", price: 48, category: "tops", colourways: ["Bone", "Black", "Ash", "Olive"], sizes: APPAREL, stock: { S: 30, M: 40, L: 30, XL: 14, XXL: 6 }, tag: "New", drop: "07", fabric: "240gsm organic cotton jersey", fit: "Boxy, cropped body", shape: "tee", live: true, added: 10 },
   { id: "double-knee-carpenter", name: "Double-Knee Carpenter", price: 128, category: "bottoms", colourways: ["Black", "Tan", "Grey"], sizes: ["28", "30", "32", "34", "36"], stock: { "28": 8, "30": 16, "32": 20, "34": 14, "36": 6 }, drop: "07", fabric: "12oz cotton canvas", fit: "Relaxed, straight leg", shape: "pants", live: true, added: 9 },
-  { id: "nylon-track-jacket", name: "Nylon Track Jacket", price: 165, category: "outerwear", colourways: ["Black", "Stone"], sizes: APPAREL, stock: { S: 3, M: 4, L: 2 }, run: 250, tag: "Low stock", drop: "07", fabric: "100% recycled nylon, mesh lining", fit: "Oversized, dropped shoulder", shape: "jacket", live: true, added: 8 },
+  { id: "nylon-track-jacket", name: "Nylon Track Jacket", price: 165, category: "outerwear", colourways: ["Black", "Stone"], sizes: APPAREL, stock: { S: 3, M: 4, L: 2 }, run: 250, tag: "Low stock", drop: "07", fabric: "100% recycled nylon, mesh lining", fit: "Oversized, dropped shoulder", shape: "jacket", photo: "/products/red.jpg", live: true, added: 8 },
   { id: "480gsm-hoodie", name: "480gsm Hoodie", price: 120, category: "tops", colourways: ["Black", "Grey", "Navy", "Bone", "Red"], sizes: APPAREL, stock: { S: 10, M: 14, L: 12, XL: 8, XXL: 4 }, drop: "07", fabric: "480gsm brushed-back fleece", fit: "Boxy, dropped shoulder", shape: "hoodie", live: true, added: 7 },
   { id: "ripstop-cargo-short", name: "Ripstop Cargo Short", price: 78, category: "bottoms", colourways: ["Black", "Olive", "Sand"], sizes: ["28", "30", "32", "34", "36"], stock: { "28": 6, "30": 12, "32": 12, "34": 8, "36": 4 }, tag: "New", drop: "07", fabric: "Cotton-nylon ripstop", fit: "Relaxed, above the knee", shape: "pants", live: true, added: 6 },
   { id: "puffer-vest", name: "Puffer Vest", price: 190, category: "outerwear", colourways: ["Black", "Orange"], sizes: ["S", "M", "L", "XL"], stock: { S: 6, M: 8, L: 6, XL: 4 }, drop: "07", fabric: "Recycled nylon shell, synthetic fill", fit: "Regular, boxy", shape: "jacket", live: true, added: 5 },
-  { id: "fleece-quarter-zip", name: "Fleece Quarter-Zip", price: 110, category: "tops", colourways: ["Grey", "Black", "Cream"], sizes: ["M", "L", "XL"], stock: { M: 10, L: 10, XL: 6 }, drop: "07", fabric: "Polar fleece, nylon yoke", fit: "Relaxed", shape: "hoodie", live: true, added: 4 },
+  { id: "fleece-quarter-zip", name: "Fleece Quarter-Zip", price: 110, category: "tops", colourways: ["Grey", "Black", "Cream"], sizes: ["M", "L", "XL"], stock: { M: 10, L: 10, XL: 6 }, drop: "07", fabric: "Polar fleece, nylon yoke", fit: "Relaxed", shape: "hoodie", photo: "/products/cream.jpg", live: true, added: 4 },
   { id: "5-panel-cap", name: "5-Panel Cap", price: 38, category: "accessories", colourways: ["Black", "White", "Red", "Olive", "Navy", "Sand"], sizes: ["One size"], stock: {}, tag: "Sold out", drop: "06", fabric: "Nylon, adjustable strap", fit: "One size", live: true, added: 3 },
-  { id: "racing-crew", name: "Racing Crew", price: 110, category: "tops", colourways: ["Black", "Red"], sizes: APPAREL, stock: { S: 6, M: 10, L: 10, XL: 6, XXL: 2 }, drop: "07", fabric: "380gsm loopback cotton", fit: "Boxy", shape: "hoodie", live: true, added: 2 },
-  { id: "moto-bomber", name: "Moto Bomber", price: 210, category: "outerwear", colourways: ["Black"], sizes: APPAREL, stock: { S: 4, M: 6, L: 6, XL: 3 }, run: 150, drop: "07", fabric: "Waxed cotton, quilted lining", fit: "Cropped, boxy", shape: "jacket", live: true, added: 1 },
+  { id: "racing-crew", name: "Racing Crew", price: 110, category: "tops", colourways: ["Black", "Red"], sizes: APPAREL, stock: { S: 6, M: 10, L: 10, XL: 6, XXL: 2 }, drop: "07", fabric: "380gsm loopback cotton", fit: "Boxy", shape: "hoodie", photo: "/products/black.jpg", live: true, added: 2 },
+  { id: "moto-bomber", name: "Moto Bomber", price: 210, category: "outerwear", colourways: ["Black"], sizes: APPAREL, stock: { S: 4, M: 6, L: 6, XL: 3 }, run: 150, drop: "07", fabric: "Waxed cotton, quilted lining", fit: "Cropped, boxy", shape: "jacket", photo: "/products/olive.jpg", live: true, added: 1 },
 ];
 
 export type SectionKey = "hero" | "countdown" | "grid" | "wear" | "cats" | "news";

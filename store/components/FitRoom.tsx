@@ -7,6 +7,7 @@ import { FIT_SIZES, computeFit, type View } from "@/lib/fit";
 import { money } from "@/lib/format";
 import { addToBag, closeFitRoom, setFit, setFitTab, siteFor, toast, useStore } from "@/lib/store";
 import { ImageSlot } from "./ImageSlot";
+import { RealTryOn } from "./RealTryOn";
 
 const DEFAULT_GARMENTS = ["nylon-track-jacket", "boxy-heavy-tee", "480gsm-hoodie", "double-knee-carpenter"];
 const SHORT: Record<string, string> = { "nylon-track-jacket": "Track Jacket", "boxy-heavy-tee": "Heavy Tee", "480gsm-hoodie": "Hoodie", "double-knee-carpenter": "Carpenter" };
@@ -28,7 +29,7 @@ export function FitRoom() {
   return <FitRoomDialog key={productId ?? "none"} tab={tab} productId={productId} />;
 }
 
-function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit"; productId?: string }) {
+function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit" | "real"; productId?: string }) {
   const s = useStore();
   const router = useRouter();
   const products = siteFor(s).products;
@@ -135,11 +136,14 @@ function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit"; productId?: s
       <div className="fit" role="dialog" aria-modal="true" aria-label="Fit room">
         <div className="fit-tabs">
           <button className={`pick ${tab === "guide" ? "acc" : ""}`} onClick={() => setFitTab("guide")}>01 Size guide</button>
-          <button className={`pick ${tab === "fit" ? "acc" : ""}`} onClick={() => setFitTab("fit")}>02 Try it on<span className="only-d">&nbsp;in 3D</span></button>
+          <button className={`pick ${tab === "fit" ? "acc" : ""}`} onClick={() => setFitTab("fit")}>02 Fit<span className="only-d">&nbsp;by zone</span></button>
+          <button className={`pick ${tab === "real" ? "acc" : ""}`} onClick={() => setFitTab("real")}>03<span className="only-d">&nbsp;Real</span> try-on</button>
           <button className="close" onClick={closeFitRoom}>Close ×</button>
         </div>
 
-        {tab === "fit" ? (
+        {tab === "real" ? (
+          <RealTryOn productId={productId} />
+        ) : tab === "fit" ? (
           <div className="fit-body">
             <div className="fit-ctl">
               <section>

@@ -107,7 +107,7 @@ export default function Category() {
             </div>
             {preview && (
               <div className="preview">
-                <div className="ph grayscale"><ImageSlot id={productImg(preview.id)} placeholder={`preview: ${preview.name.toLowerCase()}`} alt={preview.name} /></div>
+                <div className="ph grayscale"><ImageSlot id={productImg(preview.id)} src={preview.photo} placeholder={`preview: ${preview.name.toLowerCase()}`} alt={preview.name} /></div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}><span className="b">{String(hot + 1).padStart(2, "0")} {preview.name}</span><span>{money(preview.price)}</span></div>
                 <PreviewStock left={stockLeft(preview)} />
               </div>

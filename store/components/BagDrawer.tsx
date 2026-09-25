@@ -48,7 +48,7 @@ export function BagDrawer() {
             <div className="items">
               {lines.map((l, i) => (
                 <div className="line" key={`${l.productId}-${l.size}-${l.colour}`}>
-                  <div className="ph grayscale"><ImageSlot id={productImg(l.productId)} alt={l.product.name} /></div>
+                  <div className="ph grayscale"><ImageSlot id={productImg(l.productId)} src={l.product.photo} alt={l.product.name} /></div>
                   <div className="info">
                     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                       <Link href={`/product/${l.productId}`} className="nm" onClick={closeBag}>{l.product.name}</Link>

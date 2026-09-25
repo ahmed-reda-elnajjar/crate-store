@@ -42,13 +42,20 @@ export interface Session {
   name: string;
 }
 
-export type FitTab = "guide" | "fit";
+export type FitTab = "guide" | "fit" | "real";
 
 export interface UiState {
   bagOpen: boolean;
   menuOpen: boolean;
   fitRoom: { open: boolean; tab: FitTab; productId?: string };
   toast: string | null;
+}
+
+/** A generated try-on image the customer kept; the picture itself lives in IndexedDB under `look-<id>`. */
+export interface SavedLook {
+  id: string;
+  items: string[];
+  at: number;
 }
 
 export interface State {
@@ -61,6 +68,9 @@ export interface State {
   orders: Order[];
   users: User[];
   fit: { h: number; w: number };
+  looks: SavedLook[];
+  /** The customer agreed to send their photo to the try-on service. */
+  tryonConsent: boolean;
   ui: UiState;
 }
 
@@ -86,6 +96,8 @@ const INITIAL: State = {
   orders: SEED_ORDERS,
   users: SEED_USERS,
   fit: { h: 178, w: 74 },
+  looks: [],
+  tryonConsent: false,
   ui: { bagOpen: false, menuOpen: false, fitRoom: { open: false, tab: "fit" }, toast: null },
 };
 
@@ -252,6 +264,21 @@ export function placeOrder(total: number): Order {
 
 export function setFit(patch: Partial<State["fit"]>) {
   set((s) => ({ fit: { ...s.fit, ...patch } }));
+}
+
+// ── Photo try-on ───────────────────────────────────────────────────────────
+
+export function saveLook(look: SavedLook) {
+  set((s) => ({ looks: [look, ...s.looks].slice(0, 12) }));
+}
+export function removeLook(id: string) {
+  set((s) => ({ looks: s.looks.filter((l) => l.id !== id) }));
+}
+export function setTryonConsent(tryonConsent: boolean) {
+  set({ tryonConsent });
+}
+export function clearLooks() {
+  set({ looks: [] });
 }
 
 // ── UI ─────────────────────────────────────────────────────────────────────

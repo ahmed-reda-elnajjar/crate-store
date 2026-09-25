@@ -16,7 +16,7 @@ export function ProductCard({ p, ratio = "34", showCw = true, bold }: { p: Produ
   return (
     <Link href={`/product/${p.id}`} className={`pcard ${ratio === "45" ? "r45" : ""}`} style={{ color: "inherit" }}>
       <div className="ph grayscale">
-        <ImageSlot id={productImg(p.id)} placeholder="product shot" alt={p.name} />
+        <ImageSlot id={productImg(p.id)} src={p.photo} placeholder="product shot" alt={p.name} />
         {tag && <span className="ov-tag">{tag}</span>}
       </div>
       <div className="meta">

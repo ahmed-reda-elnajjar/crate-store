@@ -209,7 +209,7 @@ function Checkout() {
           <h3 style={{ margin: 0 }}>Order · {lines.reduce((a, l) => a + l.qty, 0)} items</h3>
           {lines.map((l) => (
             <div className="it" key={`${l.productId}-${l.size}-${l.colour}`}>
-              <div className="ph grayscale"><ImageSlot id={productImg(l.productId)} alt={l.product.name} /></div>
+              <div className="ph grayscale"><ImageSlot id={productImg(l.productId)} src={l.product.photo} alt={l.product.name} /></div>
               <div style={{ display: "flex", flexDirection: "column" }}>
                 <span style={{ fontWeight: 600, fontSize: 14 }}>{l.product.name}{l.qty > 1 ? ` × ${l.qty}` : ""}</span>
                 <span className="muted" style={{ fontSize: 12 }}>{l.colour} · {l.size}</span>

@@ -77,13 +77,13 @@ export default function ProductPage() {
         <div className="pdp">
           <div className="gallery">
             {SHOTS.map((ph, i) => (
-              <div key={i} className="ph grayscale"><ImageSlot id={productImg(p.id, i)} placeholder={ph} alt={`${p.name}, ${ph}`} editable={admin} /></div>
+              <div key={i} className="ph grayscale"><ImageSlot id={productImg(p.id, i)} src={i === 0 ? p.photo : undefined} placeholder={ph} alt={`${p.name}, ${ph}`} editable={admin} /></div>
             ))}
           </div>
 
           <div className="pdp-m-gallery only-m" onScroll={(e) => setShot(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}>
             {SHOTS.map((ph, i) => (
-              <div key={i} className="ph grayscale"><ImageSlot id={productImg(p.id, i)} placeholder={ph} alt={`${p.name}, ${ph}`} editable={admin} /></div>
+              <div key={i} className="ph grayscale"><ImageSlot id={productImg(p.id, i)} src={i === 0 ? p.photo : undefined} placeholder={ph} alt={`${p.name}, ${ph}`} editable={admin} /></div>
             ))}
           </div>
 
