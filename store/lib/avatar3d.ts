@@ -641,6 +641,8 @@ export interface Wear {
   zones: Record<string, Level>;
   /** Short cargo pockets, knee panels and so on come from the product's name. */
   name: string;
+  /** Your own 3D file for this piece: its URL, size scaling, and whether to repaint it in `colour`. */
+  model?: { url: string; ratio: { w: number; l: number }; recolour: boolean };
 }
 
 export const HEAT: Record<Level, string> = { [-2]: "#e0321b", [-1]: "#f28c3c", 0: "#3aa76d", 1: "#5b9bd5", 2: "#2f5fc4" };
@@ -944,7 +946,7 @@ function buildCap(r: Rig, w: Wear): THREE.Group {
   crown.scale.set(H.x * 1.12, H.y * 0.78, H.z * 1.1);
   crown.rotation.x = -0.12;
   g.add(crown);
-  const brim = mesh(new THREE.CylinderGeometry(1, 1, 0.5, 40, 1, false, -Math.PI / 2 - 1.2, 2.4), m);
+  const brim = mesh(new THREE.CylinderGeometry(1, 1, 0.5, 40, 1, false, -1.2, 2.4), m);
   brim.position.copy(r.headC).add(V(0, H.y * 0.2, H.z * 0.55));
   brim.scale.set(H.x * 1.05, 1, H.z * 1.2);
   brim.rotation.x = 0.12;

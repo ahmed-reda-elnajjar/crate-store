@@ -86,3 +86,31 @@ export function useImage(id: string): string | null {
   }, [id]);
   return url;
 }
+
+/** Object URLs for several slots at once (slot id → URL, only filled slots). */
+export function useImages(ids: string[]): Record<string, string> {
+  const key = ids.join("|");
+  const [map, setMap] = useState<Record<string, string>>({});
+  useEffect(() => {
+    const list = key ? key.split("|") : [];
+    const update = () => {
+      const next: Record<string, string> = {};
+      for (const id of list) {
+        const u = urls.get(id);
+        if (u) next[id] = u;
+      }
+      setMap(next);
+    };
+    for (const id of list) {
+      let set = listeners.get(id);
+      if (!set) listeners.set(id, (set = new Set()));
+      set.add(update);
+      if (!urls.has(id)) void refresh(id);
+    }
+    update();
+    return () => {
+      for (const id of list) listeners.get(id)?.delete(update);
+    };
+  }, [key]);
+  return map;
+}

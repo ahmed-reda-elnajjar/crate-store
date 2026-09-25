@@ -5,6 +5,7 @@
 import * as THREE from "three";
 import { buildAvatar, buildBust, cssColour, disposeTree, type Look, type Wear } from "./avatar3d";
 import type { Body } from "./fit";
+import { loadGLB, standalone } from "./models";
 
 const W = 240;
 const H = 300;
@@ -33,9 +34,9 @@ function stage() {
 }
 
 /** Frame the object (built in cm) in the card and render it. */
-function shoot(obj: THREE.Group, pad: number, yaw = 0.35): string {
+function shoot(obj: THREE.Group, pad: number, yaw = 0.35, unit = 0.01): string {
   const { renderer, scene, camera } = stage();
-  obj.scale.setScalar(0.01);
+  obj.scale.setScalar(unit);
   obj.rotation.y = yaw;
   scene.add(obj);
   const box = new THREE.Box3().setFromObject(obj);
@@ -56,12 +57,16 @@ function shoot(obj: THREE.Group, pad: number, yaw = 0.35): string {
 
 const NO_FACE: Look = { skin: "#ccc", hair: "#222", hairStyle: "bald", beard: "none", eyes: "#333", brows: "regular" };
 
-/** One garment on its own, as if on an invisible body. */
-export function garmentThumb(body: Body, w: Wear): string {
-  const key = `g|${w.id}|${w.colour}|${JSON.stringify(w.m)}|${body.h}|${body.chest}`;
+/** One garment on its own, as if on an invisible body: your 3D file when it has one. */
+export async function garmentThumb(body: Body, w: Wear): Promise<string> {
+  const key = `g|${w.id}|${w.colour}|${JSON.stringify(w.m)}|${body.h}|${body.chest}|${w.model?.url ?? ""}`;
   const hit = cache.get(key);
   if (hit) return hit;
-  const url = shoot(buildAvatar(body, NO_FACE, [{ ...w, colour: cssColour(w.colour) }], false, true), 1.12);
+  const obj = w.model
+    ? standalone(await loadGLB(w.model.url), w.model.recolour ? cssColour(w.colour) : undefined)
+    : buildAvatar(body, NO_FACE, [{ ...w, colour: cssColour(w.colour) }], false, true);
+  // Built-in garments are modelled in cm; files are in metres.
+  const url = shoot(obj, 1.12, 0.35, w.model ? 1 : 0.01);
   cache.set(key, url);
   return url;
 }

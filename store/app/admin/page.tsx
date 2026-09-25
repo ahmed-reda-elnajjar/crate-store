@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ImageSlot, productImg } from "@/components/ImageSlot";
+import { ModelUpload } from "@/components/ModelUpload";
+import { AVATAR_FILE, AVATAR_SLOT, modelSlot } from "@/lib/models";
 import { BOTTOM_MEASURES, CATEGORIES, FIT_STYLES, TOP_MEASURES, isBottom, type CategoryKey, type FitShape, type FitStyle, type Product } from "@/lib/data";
 import { longDate, money2 } from "@/lib/format";
 import {
@@ -119,6 +121,13 @@ function Products({ products }: { products: Product[] }) {
         <h1>Products</h1>
         <button className="btn btn-primary h44" style={{ gap: 24 }} onClick={addProduct}><span>Add product</span><span>+</span></button>
       </div>
+      <div className="avatar-file">
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <b style={{ fontSize: 14 }}>Fit-room avatar (3D)</b>
+          <span className="muted" style={{ fontSize: 12 }}>Your own model as a .glb, standing straight, facing forward, arms slightly out. Each garment&rsquo;s own .glb (under Measurements) must be made on this avatar in the same pose.</span>
+        </div>
+        <ModelUpload slot={AVATAR_SLOT} label="Avatar" shipped={AVATAR_FILE} />
+      </div>
       <div className="prow head"><span>Photo</span><span>Name</span><span>Price</span><span>Stock</span><span>Status</span><span /></div>
       {products.map((p) => (
         <div className="prow" key={p.id}>
@@ -164,6 +173,17 @@ function Measurements({ p }: { p: Product }) {
             {!p.shape && <option value="">Choose…</option>}
             {SHAPES.map((x) => <option key={x.k} value={x.k}>{x.l}</option>)}
           </select>
+        </div>
+        <div className="field">
+          <span className="flabel">3D file for the fit room</span>
+          <ModelUpload slot={modelSlot(p.id)} label={p.name} shipped={p.model} />
+          <label className="muted" style={{ fontSize: 12, display: "flex", gap: 8, alignItems: "center" }}>
+            Modelled in size
+            <select aria-label="Size the 3D file was modelled in" value={p.modelSize ?? ""} onChange={(e) => updateProduct(p.id, { modelSize: e.target.value || undefined })}>
+              <option value="">{p.sizes.includes("M") ? "M (default)" : "Middle size (default)"}</option>
+              {p.sizes.map((z) => <option key={z} value={z}>{z}</option>)}
+            </select>
+          </label>
         </div>
         <div className="field">
           <span className="flabel">Cut</span>

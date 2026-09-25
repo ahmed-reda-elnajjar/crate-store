@@ -7,7 +7,8 @@ import { BEARDS, BROWS, DEFAULT_LOOK, EYE_COLOURS, HAIR_COLOURS, HAIR_STYLES, SK
 import { BOTTOM_MEASURES, SIZE_CHART, TOP_MEASURES, isBottom, type Product } from "@/lib/data";
 import { fitSize, recommend, resolveBody, type Body, type Level } from "@/lib/fit";
 import { money } from "@/lib/format";
-import { useImage } from "@/lib/images";
+import { useImage, useImages } from "@/lib/images";
+import { AVATAR_FILE, AVATAR_SLOT, modelSlot, sizeRatios } from "@/lib/models";
 import { addToBag, closeFitRoom, setFitTab, siteFor, toast, useStore } from "@/lib/store";
 import { BodyMeasures, BodySliders, overrideCount } from "./BodyProfile";
 import { ImageSlot, productImg } from "./ImageSlot";
@@ -89,7 +90,7 @@ function useLook(): [Appearance, (patch: Partial<Appearance>) => void] {
   return [look, update];
 }
 
-type ThumbJob = { key: string; run: (t: typeof import("@/lib/thumbs")) => string };
+type ThumbJob = { key: string; run: (t: typeof import("@/lib/thumbs")) => string | Promise<string> };
 
 /** Renders card images one at a time in the background and remembers them. */
 function useThumbs(jobs: ThumbJob[]) {
@@ -104,7 +105,7 @@ function useThumbs(jobs: ThumbJob[]) {
         if (!alive) return;
         if (done.current[j.key]) continue;
         try {
-          const url = j.run(t);
+          const url = await j.run(t);
           done.current[j.key] = url;
           if (alive) setThumbs((m) => ({ ...m, [j.key]: url }));
         } catch {
@@ -170,6 +171,11 @@ function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit" | "real"; prod
   const [look, setLook] = useLook();
   const [product, setProduct] = useState<"body" | "product">("body");
   const faceUrl = useImage("fit-face");
+  // Your own 3D files: uploaded in admin (this browser) or shipped in public/models.
+  const avatarUpload = useImage(AVATAR_SLOT);
+  const avatarUrl = avatarUpload ?? AVATAR_FILE ?? null;
+  const modelUploads = useImages(products.map((p) => modelSlot(p.id)));
+  const modelUrlOf = (p: Product) => modelUploads[modelSlot(p.id)] ?? p.model;
 
   const g = byId(focusId);
   const sizeFor = (p: Product) => {
@@ -194,12 +200,15 @@ function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit" | "real"; prod
     const f = fitSize(p, b, z);
     const zones: Record<string, Level> = {};
     for (const zn of f?.zones ?? []) zones[zn.k] = zn.level;
-    return { id: p.id, slot, shape: p.shape, fitStyle: p.fitStyle, m: p.measurements?.[z], colour: swatch(colourFor(p)), zones, name: p.name };
+    const url = modelUrlOf(p);
+    const base = p.modelSize && p.sizes.includes(p.modelSize) ? p.modelSize : p.sizes.includes("M") ? "M" : p.sizes[Math.floor(p.sizes.length / 2)];
+    const model = url ? { url, ratio: sizeRatios(p.measurements?.[z], p.measurements?.[base], slot === "bottom"), recolour: colourFor(p) !== p.colourways[0] } : undefined;
+    return { id: p.id, slot, shape: p.shape, fitStyle: p.fitStyle, m: p.measurements?.[z], colour: swatch(colourFor(p)), zones, name: p.name, model };
   };
   const worn = (Object.entries(outfit) as [Slot, string][]).map(([slot, id]) => ({ slot, p: byId(id) })).filter((x): x is { slot: Slot; p: Product } => !!x.p);
   const wear: Wear[] = useMemo(() => worn.map(({ slot, p }) => wearOf(p, slot, body)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [JSON.stringify(outfit), sizes, colours, body, products]);
+    [JSON.stringify(outfit), sizes, colours, body, products, modelUploads]);
 
   // Card images: every piece on the shelf, and the head with each hair / beard / brow option.
   const shelfItems = locker === "wardrobe" ? wardrobe[shelf] : [];
@@ -207,7 +216,7 @@ function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit" | "real"; prod
     lookRail === "hair" ? HAIR_STYLES.map((o) => ({ key: `hair:${o.k}`, look: { ...look, hairStyle: o.k } })).map(({ key, look: l }) => ({ key: `${key}|${JSON.stringify(l)}`, run: (t) => t.headThumb(body, l) })) :
     lookRail === "beard" ? BEARDS.map((o) => ({ ...look, beard: o.k })).map((l) => ({ key: `beard|${JSON.stringify(l)}`, run: (t) => t.headThumb(body, l) })) :
     lookRail === "brows" ? BROWS.map((o) => ({ ...look, brows: o.k })).map((l) => ({ key: `brows|${JSON.stringify(l)}`, run: (t) => t.headThumb(body, l) })) : [];
-  const cardKey = (p: Product) => `${p.id}|${colourFor(p)}|${sizeFor(p)}|${body.h}|${body.chest}`;
+  const cardKey = (p: Product) => `${p.id}|${colourFor(p)}|${sizeFor(p)}|${body.h}|${body.chest}|${modelUrlOf(p) ?? ""}`;
   const thumbs = useThumbs([
     ...shelfItems.map((p): ThumbJob => ({ key: cardKey(p), run: (t) => t.garmentThumb(body, wearOf(p, slotOf(p)!, body)) })),
     ...lookJobs,
@@ -310,7 +319,7 @@ function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit" | "real"; prod
         ) : tab === "fit" ? (
           <div className="fit-body lobby-body">
             <div className={`stage lobby ${dragging ? "dragging" : ""}`}>
-              <Lobby3D body={body} wear={wear} look={look} faceUrl={faceUrl} heat={heat} focus={cam} turn={turn} onDragChange={setDragging} />
+              <Lobby3D body={body} wear={wear} look={look} faceUrl={faceUrl} avatarUrl={avatarUrl} heat={heat} focus={cam} turn={turn} onDragChange={setDragging} />
               <div className="top">
                 <div className="views">
                   {VIEWS.map(([l, yaw]) => (

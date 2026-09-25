@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
-import { buildAvatar, cssColour, disposeTree, type Appearance, type Look, type Wear } from "@/lib/avatar3d";
+import { HEAT, buildAvatar, cssColour, disposeTree, type Appearance, type Look, type Wear } from "@/lib/avatar3d";
+import { avatarTransform, fitAvatar, fitGarment, loadGLB } from "@/lib/models";
 import type { Body } from "@/lib/fit";
 
 export type Focus = "full" | "top" | "bottom";
@@ -13,6 +14,8 @@ interface Props {
   wear: Wear[];
   look: Appearance;
   faceUrl?: string | null;
+  /** Your own avatar file; used when every piece being worn has its own file too. */
+  avatarUrl?: string | null;
   heat: boolean;
   focus: Focus;
   /** Turn the avatar to this yaw (radians); bump `n` to repeat the same angle. */
@@ -33,7 +36,7 @@ const loadImage = (url: string) =>
  * 360°, zooms with the wheel or a pinch, and the camera moves to whichever
  * piece is being looked at.
  */
-export default function Lobby3D({ body, wear, look, faceUrl, heat, focus, turn, onDragChange }: Props) {
+export default function Lobby3D({ body, wear, look, faceUrl, avatarUrl, heat, focus, turn, onDragChange }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const three = useRef<{
     renderer: THREE.WebGLRenderer;
@@ -41,6 +44,9 @@ export default function Lobby3D({ body, wear, look, faceUrl, heat, focus, turn, 
     camera: THREE.PerspectiveCamera;
     pivot: THREE.Group;
     avatar?: THREE.Group;
+    /** Scene units per model unit: 0.01 for the built-in avatar (cm), 1 for files (m). */
+    base: number;
+    mixers: THREE.AnimationMixer[];
     yaw: number;
     yawTarget: number;
     zoom: number;
@@ -131,7 +137,7 @@ export default function Lobby3D({ body, wear, look, faceUrl, heat, focus, turn, 
     const pivot = new THREE.Group();
     scene.add(pivot);
 
-    const st: NonNullable<typeof three.current> = { renderer, scene, camera, pivot, yaw: 0, yawTarget: 0, zoom: 1, focus: "full", h: 1.78, pop: 0 };
+    const st: NonNullable<typeof three.current> = { renderer, scene, camera, pivot, base: 0.01, mixers: [], yaw: 0, yawTarget: 0, zoom: 1, focus: "full", h: 1.78, pop: 0 };
     three.current = st;
 
     const resize = () => {
@@ -158,12 +164,14 @@ export default function Lobby3D({ body, wear, look, faceUrl, heat, focus, turn, 
       st.yaw += (st.yawTarget - st.yaw) * Math.min(1, dt * 8);
       pivot.rotation.y = st.yaw;
       // Idle: breathing and a slow weight shift.
+      for (const m of st.mixers) m.update(dt);
       if (st.avatar) {
-        st.avatar.scale.set(0.01, 0.01 * (1 + Math.sin(t * 1.6) * 0.0035), 0.01);
+        const b = st.base;
+        st.avatar.scale.set(b, b * (1 + Math.sin(t * 1.6) * 0.0035), b);
         st.avatar.rotation.z = Math.sin(t * 0.5) * 0.006;
         if (st.pop > 0) {
           st.pop = Math.max(0, st.pop - dt * 3);
-          const s = 0.01 * (1 + Math.sin(st.pop * Math.PI) * 0.025);
+          const s = b * (1 + Math.sin(st.pop * Math.PI) * 0.025);
           st.avatar.scale.x = s;
           st.avatar.scale.z = s;
         }
@@ -255,27 +263,80 @@ export default function Lobby3D({ body, wear, look, faceUrl, heat, focus, turn, 
   }, [faceUrl]);
 
   // Rebuild the avatar when the body, the outfit or the look changes.
-  const wearKey = JSON.stringify(wear.map((w) => [w.id, w.colour, w.m, w.zones]));
+  const wearKey = JSON.stringify(wear.map((w) => [w.id, w.colour, w.m, w.zones, w.model]));
   const prevWear = useRef("");
   const lookKey = JSON.stringify(look);
+  const [note, setNote] = useState<string | null>(null);
   useEffect(() => {
     const st = three.current;
     if (!st) return;
-    const full: Look = { ...look, face };
-    const resolved = wear.map((w) => ({ ...w, colour: cssColour(w.colour) }));
-    const next = buildAvatar(body, full, resolved, heat);
-    next.scale.setScalar(0.01);
-    if (st.avatar) {
-      st.pivot.remove(st.avatar);
-      disposeTree(st.avatar);
+    let alive = true;
+    const show = (next: THREE.Group, base: number, mixers: THREE.AnimationMixer[]) => {
+      if (st.avatar) {
+        st.pivot.remove(st.avatar);
+        disposeTree(st.avatar);
+      }
+      for (const m of st.mixers) m.stopAllAction();
+      next.scale.setScalar(base);
+      st.pivot.add(next);
+      st.avatar = next;
+      st.base = base;
+      st.mixers = mixers;
+      st.h = body.h / 100;
+      if (prevWear.current && prevWear.current !== wearKey) st.pop = 1;
+      prevWear.current = wearKey;
+    };
+    const builtIn = () => {
+      const full: Look = { ...look, face };
+      const resolved = wear.map((w) => ({ ...w, colour: cssColour(w.colour) }));
+      show(buildAvatar(body, full, resolved, heat), 0.01, []);
+    };
+
+    // Your own files: the avatar plus a file for every piece being worn.
+    const missing = wear.filter((w) => !w.model);
+    if (!avatarUrl) {
+      setNote(null);
+      builtIn();
+    } else if (missing.length) {
+      setNote(`${missing.map((w) => w.name).join(", ")} ${missing.length > 1 ? "have" : "has"} no 3D file yet, so this look uses the built-in avatar.`);
+      builtIn();
+    } else {
+      (async () => {
+        try {
+          const a = await loadGLB(avatarUrl);
+          const T = avatarTransform(a, body);
+          const parts = [fitAvatar(a, T)];
+          for (const w of wear) {
+            const g = await loadGLB(w.model!.url);
+            const worst = Object.values(w.zones).reduce<number>((x, l) => (Math.abs(l) > Math.abs(x) ? l : x), 0) as keyof typeof HEAT;
+            const colour = heat ? HEAT[worst] : w.model!.recolour ? cssColour(w.colour) : undefined;
+            parts.push(fitGarment(g, T, w.model!.ratio, colour));
+          }
+          if (!alive) return;
+          const root = new THREE.Group();
+          const mixers: THREE.AnimationMixer[] = [];
+          for (const p of parts) {
+            root.add(p.root);
+            for (const c of p.clips) {
+              const m = new THREE.AnimationMixer(c.target);
+              m.clipAction(c.clip).play();
+              mixers.push(m);
+            }
+          }
+          setNote(null);
+          show(root, 1, mixers);
+        } catch {
+          if (!alive) return;
+          setNote("A 3D file couldn't be opened, so this look uses the built-in avatar.");
+          builtIn();
+        }
+      })();
     }
-    st.pivot.add(next);
-    st.avatar = next;
-    st.h = body.h / 100;
-    if (prevWear.current && prevWear.current !== wearKey) st.pop = 1;
-    prevWear.current = wearKey;
+    return () => {
+      alive = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [body, wearKey, lookKey, face, heat]);
+  }, [body, wearKey, lookKey, face, heat, avatarUrl]);
 
   useEffect(() => {
     if (three.current) three.current.focus = focus;
@@ -296,6 +357,7 @@ export default function Lobby3D({ body, wear, look, faceUrl, heat, focus, turn, 
   return (
     <div className="lobby3d" ref={host} aria-label="3D avatar. Drag to turn, scroll to zoom.">
       {failed && <div className="lobby-fail">3D needs WebGL, which this browser has switched off.</div>}
+      {note && <div className="lobby-note">{note}</div>}
     </div>
   );
 }

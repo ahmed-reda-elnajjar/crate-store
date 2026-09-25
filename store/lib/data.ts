@@ -54,6 +54,10 @@ export interface Product {
   fitStyle?: FitStyle;
   /** Flat garment measurements per size label. */
   measurements?: Record<string, Measurements>;
+  /** Your own 3D file for the fit room (public/models), modelled on the avatar file. */
+  model?: string;
+  /** The size that 3D file was modelled in; other sizes are scaled from it. Defaults to M or the middle size. */
+  modelSize?: string;
   live: boolean;
   /** Higher = newer; used for "Newest" sort. */
   added: number;

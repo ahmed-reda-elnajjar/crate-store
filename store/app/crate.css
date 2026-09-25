@@ -749,3 +749,8 @@ button { font: inherit; color: inherit; }
   .locker-rail button { height: 46px; }
   .locker-scroll { overflow: visible; padding: 10px; }
 }
+
+/* Admin: 3D file uploads. */
+.model-up { display: inline-flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 13px; }
+.avatar-file { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 14px 16px; border: 2px solid var(--color-divider); }
+.lobby-note { position: absolute; left: 16px; right: 16px; top: 92px; margin-left: auto; max-width: 320px; background: rgba(18,17,16,.75); color: #f4f1ec; font-size: 12px; padding: 8px 10px; z-index: 2; }

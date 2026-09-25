@@ -66,3 +66,13 @@ How it works:
 - The store keeps nothing on the server. The customer's photo, generated images and saved looks stay in their browser (IndexedDB), and "Delete my photos and looks" removes them. The provider's own retention policy still applies to images sent to it.
 - A repeat of the same photo and pieces comes from the browser cache and doesn't use the daily limit.
 - Pieces need a product photo: a built-in one (`public/products`) or one an admin uploads in Admin → Products.
+
+## Your own 3D avatar and garments (fit room 02)
+
+The fit room draws a built-in avatar and garments from the measurements. To use your own models instead:
+
+1. **Avatar**: one `.glb` (glTF binary, textures embedded), in metres, Y up, facing +Z (towards the camera), standing straight with arms slightly away from the body. An idle animation in the file plays on loop.
+2. **Garments**: one `.glb` per product, modelled or simulated **on that avatar, in the same pose**, exported without the avatar. Model each garment in one size (M by default, or set "Modelled in size" under Measurements); other sizes are scaled from it using the size chart. Untextured materials are repainted when a customer picks another colourway, so keep the fabric colour a plain material if you want recolouring.
+3. **Upload** in `/admin` (Products → "Fit-room avatar (3D)", and each product's Measurements → "3D file"). Uploads live in that browser, like product photos. To ship files with the site for everyone, put them in `public/models/`, set `AVATAR_FILE` in `lib/models.ts` and `model: "/models/<file>.glb"` on the product in `lib/data.ts`.
+
+The avatar file is used when every piece being worn has its own file; otherwise the look falls back to the built-in avatar and says why. The avatar is scaled to the customer's height and, across the body, to their chest, waist and hips against a 178 cm / chest 98 reference.
