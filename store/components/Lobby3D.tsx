@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
-import { buildAvatar, disposeTree, type Look, type Wear } from "@/lib/avatar3d";
+import { buildAvatar, cssColour, disposeTree, type Appearance, type Look, type Wear } from "@/lib/avatar3d";
 import type { Body } from "@/lib/fit";
 
 export type Focus = "full" | "top" | "bottom";
@@ -11,21 +11,13 @@ export type Focus = "full" | "top" | "bottom";
 interface Props {
   body: Body;
   wear: Wear[];
-  skin: string;
-  hair: string;
+  look: Appearance;
   faceUrl?: string | null;
   heat: boolean;
   focus: Focus;
   /** Turn the avatar to this yaw (radians); bump `n` to repeat the same angle. */
   turn: { yaw: number; n: number };
   onDragChange?: (dragging: boolean) => void;
-}
-
-/** Resolves `var(--token)` colours against the page so the 3D scene matches the CSS. */
-function cssColour(c: string): string {
-  const m = /^var\((--[^)]+)\)$/.exec(c.trim());
-  if (!m || typeof document === "undefined") return c;
-  return getComputedStyle(document.documentElement).getPropertyValue(m[1]).trim() || "#888";
 }
 
 const loadImage = (url: string) =>
@@ -41,7 +33,7 @@ const loadImage = (url: string) =>
  * 360°, zooms with the wheel or a pinch, and the camera moves to whichever
  * piece is being looked at.
  */
-export default function Lobby3D({ body, wear, skin, hair, faceUrl, heat, focus, turn, onDragChange }: Props) {
+export default function Lobby3D({ body, wear, look, faceUrl, heat, focus, turn, onDragChange }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const three = useRef<{
     renderer: THREE.WebGLRenderer;
@@ -265,12 +257,13 @@ export default function Lobby3D({ body, wear, skin, hair, faceUrl, heat, focus, 
   // Rebuild the avatar when the body, the outfit or the look changes.
   const wearKey = JSON.stringify(wear.map((w) => [w.id, w.colour, w.m, w.zones]));
   const prevWear = useRef("");
+  const lookKey = JSON.stringify(look);
   useEffect(() => {
     const st = three.current;
     if (!st) return;
-    const look: Look = { skin, hair, face };
+    const full: Look = { ...look, face };
     const resolved = wear.map((w) => ({ ...w, colour: cssColour(w.colour) }));
-    const next = buildAvatar(body, look, resolved, heat);
+    const next = buildAvatar(body, full, resolved, heat);
     next.scale.setScalar(0.01);
     if (st.avatar) {
       st.pivot.remove(st.avatar);
@@ -282,7 +275,7 @@ export default function Lobby3D({ body, wear, skin, hair, faceUrl, heat, focus, 
     if (prevWear.current && prevWear.current !== wearKey) st.pop = 1;
     prevWear.current = wearKey;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [body, wearKey, skin, hair, face, heat]);
+  }, [body, wearKey, lookKey, face, heat]);
 
   useEffect(() => {
     if (three.current) three.current.focus = focus;
