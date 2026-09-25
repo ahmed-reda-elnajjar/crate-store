@@ -163,6 +163,12 @@ export interface WearSettings extends WearFit {
   alignedFits?: Record<string, WearFit>;
   /** Built-in photos (public/lookbook) used until an admin uploads replacements. "model" is the model photo. */
   images?: Record<string, string>;
+  /**
+   * Size of the model photo on the page: height as % of the default frame, width as %
+   * of the photo's own width at that height. When the width no longer matches the
+   * photo, "crop" trims the sides (or top and bottom) and "stretch" distorts it.
+   */
+  frame?: { h: number; w: number; fill?: "crop" | "stretch" };
   colorPhotos: boolean;
   rotateSeconds: number;
   title: string;

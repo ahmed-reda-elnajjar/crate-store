@@ -9,7 +9,7 @@ interface Props {
   placeholder?: string;
   /** Shows drop / browse / remove controls. Admin-only for catalogue photos. */
   editable?: boolean;
-  fit?: "cover" | "contain";
+  fit?: "cover" | "contain" | "fill";
   round?: boolean;
   alt?: string;
   /** Pin the image to the top edge instead of centring it (garments: collar at the top). */
@@ -67,7 +67,7 @@ export function ImageSlot({ id, placeholder = "", editable, fit = "cover", round
     if (imgRef.current?.complete) report(imgRef.current);
   });
 
-  const cls = ["slot", fit === "contain" && "contain", anchorTop && "top", round && "round", editable && "edit", drag && "drag"].filter(Boolean).join(" ");
+  const cls = ["slot", fit === "contain" && "contain", fit === "fill" && "fill", anchorTop && "top", round && "round", editable && "edit", drag && "drag"].filter(Boolean).join(" ");
 
   if (!editable) {
     return (
