@@ -33,7 +33,7 @@ Guests can browse. Adding to the bag or checking out sends them to sign in.
 | 2i Checkout | `/checkout` |
 | 2k Account (+ 2l member strip) | `/account` |
 | 2m Search | `/search?q=` |
-| 3a / 3b Size guide + fit room | `components/FitRoom.tsx`; fit engine in `lib/fit.ts` (tests in `lib/fit.test.ts`), avatar in `lib/avatar.ts`, body profile fields in `components/BodyProfile.tsx` |
+| 3a / 3b Size guide + fit room | `components/FitRoom.tsx`; fit engine in `lib/fit.ts` (tests in `lib/fit.test.ts`), 3D avatar and garments in `lib/avatar3d.ts`, the lobby stage (three.js) in `components/Lobby3D.tsx`, body profile fields in `components/BodyProfile.tsx` |
 | 4a Sign in | `/signin` |
 | 4b Admin | `/admin` |
 | 5a / 5b Wear carousel | `/lookbook` and a home section (`components/WearCarousel.tsx`) |

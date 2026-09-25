@@ -648,3 +648,50 @@ button { font: inherit; color: inherit; }
 .foot { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; background: var(--color-divider); border-top: 2px solid var(--color-divider); font-size: 13px; }
 .foot > div { background: var(--color-bg); padding: 20px 32px; display: flex; flex-direction: column; gap: 6px; }
 @media (max-width: 760px) { .foot { grid-template-columns: 1fr 1fr; } .foot > div { padding: 16px; } }
+
+/* Fit room 02: game-lobby 3D stage and wardrobe. */
+.stage.lobby { background: radial-gradient(120% 80% at 50% 35%, #45423e 0%, #242220 55%, #121110 100%); cursor: grab; touch-action: pan-y; }
+.stage.lobby.dragging { cursor: grabbing; }
+.lobby3d { position: absolute; inset: 0; }
+.lobby3d canvas { display: block; }
+.lobby-fail { position: absolute; inset: 0; display: grid; place-items: center; color: #d8d4cc; font-size: 13px; padding: 24px; text-align: center; }
+.stage.lobby .top { pointer-events: none; }
+.stage.lobby .top .views { pointer-events: auto; background: rgba(255,255,255,.14); border-color: transparent; }
+.stage.lobby .views .pick { background: rgba(18,17,16,.55); color: #f4f1ec; backdrop-filter: blur(6px); }
+.stage.lobby .views .pick:hover { background: rgba(18,17,16,.8); }
+.stage.lobby .views .pick.on { background: #f4f1ec; color: #121110; }
+.loadout { position: absolute; left: 16px; right: 16px; bottom: 16px; display: flex; flex-wrap: wrap; gap: 6px; z-index: 2; pointer-events: none; }
+.loadout .chip { pointer-events: auto; display: flex; align-items: stretch; background: rgba(18,17,16,.62); color: #f4f1ec; backdrop-filter: blur(6px); font-size: 12px; border-left: 3px solid transparent; }
+.loadout .chip.on { border-left-color: var(--color-accent); background: rgba(18,17,16,.85); }
+.loadout .chip button { padding: 7px 10px; color: inherit; }
+.loadout .chip .muted { color: #a9a49b; text-transform: uppercase; letter-spacing: .06em; font-size: 10px; }
+.loadout .chip .x { padding: 7px 10px 7px 2px; font-size: 14px; color: #a9a49b; }
+.loadout .chip .x:hover { color: #fff; }
+.drag-hint { position: absolute; right: 16px; top: 58px; color: #a9a49b; font-size: 12px; pointer-events: none; }
+.heat-key { position: absolute; left: 16px; top: 62px; display: flex; flex-direction: column; gap: 4px; color: #f4f1ec; font-size: 12px; z-index: 2; background: rgba(18,17,16,.6); padding: 8px 10px; }
+.heat-key span { display: flex; align-items: center; gap: 6px; }
+.heat-key i { width: 10px; height: 10px; display: inline-block; }
+.shelf-tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); }
+.shelf-tabs .pick { padding: 8px 6px; font-size: 13px; text-align: center; }
+.shelf { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.shelf .item { all: unset; cursor: pointer; display: flex; flex-direction: column; gap: 3px; font-size: 11px; line-height: 1.25; min-width: 0; }
+.shelf .item .ph { position: relative; display: block; aspect-ratio: 1; background: var(--color-surface); border: 2px solid transparent; }
+.shelf .item:hover .ph { border-color: var(--color-neutral-300); }
+.shelf .item.on .ph { border-color: var(--color-text); }
+.shelf .item.focus .ph { border-color: var(--color-accent); }
+.shelf .item .dot { position: absolute; right: 5px; bottom: 5px; width: 10px; height: 10px; border: 1px solid rgba(0,0,0,.25); }
+.shelf .item b { font-weight: 600; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shelf .item span:last-child { color: var(--color-neutral-600); }
+.shelf .item:focus-visible .ph { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.cw-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cw-row .swatch { width: 24px; height: 24px; border: 1px solid rgba(0,0,0,.15); }
+.look-row { display: grid; grid-template-columns: 44px 1fr; align-items: center; font-size: 13px; }
+@media (max-width: 760px) {
+  .stage.lobby { height: 470px; }
+  .drag-hint { display: none; }
+  .stage.lobby .top { right: 10px; }
+  .loadout { left: 10px; right: 10px; bottom: 10px; }
+  .loadout .chip { font-size: 11px; }
+  .shelf { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .fit-ctl .look-row .muted { display: inline; }
+}

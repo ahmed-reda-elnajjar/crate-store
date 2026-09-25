@@ -1,20 +1,61 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { avatarGeometry } from "@/lib/avatar";
+import { useEffect, useMemo, useState } from "react";
+import type { Slot, Wear } from "@/lib/avatar3d";
 import { BOTTOM_MEASURES, SIZE_CHART, TOP_MEASURES, isBottom, type Product } from "@/lib/data";
-import { fitSize, recommend, resolveBody } from "@/lib/fit";
+import { fitSize, recommend, resolveBody, type Level } from "@/lib/fit";
 import { money } from "@/lib/format";
+import { useImage } from "@/lib/images";
 import { addToBag, closeFitRoom, setFitTab, siteFor, toast, useStore } from "@/lib/store";
 import { BodyMeasures, BodySliders, overrideCount } from "./BodyProfile";
-import { ImageSlot } from "./ImageSlot";
+import { ImageSlot, productImg } from "./ImageSlot";
+import type { Focus } from "./Lobby3D";
+import { SWATCH } from "./ProductCard";
 import { RealTryOn } from "./RealTryOn";
 
-const DEFAULT_GARMENTS = ["nylon-track-jacket", "boxy-heavy-tee", "480gsm-hoodie", "double-knee-carpenter"];
-const SHORT: Record<string, string> = { "nylon-track-jacket": "Track Jacket", "boxy-heavy-tee": "Heavy Tee", "480gsm-hoodie": "Hoodie", "double-knee-carpenter": "Carpenter" };
-type View = "front" | "side" | "back";
-const SPIN: View[] = ["front", "side", "back", "side"];
+const Lobby3D = dynamic(() => import("./Lobby3D"), { ssr: false, loading: () => <div className="lobby3d"><div className="lobby-fail">Loading 3D…</div></div> });
+
+const DEFAULTS: Partial<Record<Slot, string>> = { top: "boxy-heavy-tee", bottom: "double-knee-carpenter" };
+const SLOTS: { k: Slot; l: string }[] = [
+  { k: "top", l: "Tops" },
+  { k: "outer", l: "Outerwear" },
+  { k: "bottom", l: "Bottoms" },
+  { k: "head", l: "Caps" },
+];
+const SLOT_ONE: Record<Slot, string> = { top: "Top", outer: "Outer", bottom: "Bottom", head: "Cap" };
+const SKINS = ["#f1d3bf", "#e0b394", "#c68e6a", "#9a6444", "#6b4330", "#3f271c"];
+const HAIRS = ["#1c1714", "#4a3121", "#8a5a33", "#c9a36a", "#8f8a84"];
+const VIEWS: [string, number][] = [["Front", 0], ["Side", -Math.PI / 2], ["Back", Math.PI]];
+
+/** Which part of the outfit a product fills; accessories only if they're a cap or hat. */
+function slotOf(p: Product): Slot | undefined {
+  if (p.category === "accessories") return /cap|hat|beanie/i.test(p.name) ? "head" : undefined;
+  if (p.category === "bottoms" || p.shape === "pants") return "bottom";
+  if (p.category === "outerwear") return "outer";
+  return "top";
+}
+
+/** Swatch colour for a colourway; unknown names fall back to a neutral step. */
+const swatch = (c: string) => SWATCH[c] ?? "var(--color-neutral-500)";
+
+function useLocal<T extends string>(key: string, initial: T): [T, (v: T) => void] {
+  const [v, setV] = useState<T>(initial);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) setV(saved as T);
+    } catch {}
+  }, [key]);
+  const set = (x: T) => {
+    setV(x);
+    try {
+      localStorage.setItem(key, x);
+    } catch {}
+  };
+  return [v, set];
+}
 
 /** 3a (desktop modal) and 3b (mobile sheet): size guide + try-on. */
 export function FitRoom() {
@@ -30,31 +71,88 @@ function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit" | "real"; prod
   const products = siteFor(s).products;
   const profile = s.fit;
   const { h, w } = profile;
-  const body = resolveBody(profile);
+  const body = useMemo(() => resolveBody(profile), [profile]);
 
-  const garments = useMemo(() => {
-    const list = DEFAULT_GARMENTS.map((id) => products.find((p) => p.id === id)).filter((p): p is Product => !!p && !!p.shape);
-    const opened = products.find((p) => p.id === productId);
-    if (opened?.shape && !list.some((p) => p.id === opened.id)) {
-      const i = list.findIndex((p) => p.shape === opened.shape);
-      if (i >= 0) list[i] = opened;
-      else list.unshift(opened);
+  // Everything that can be worn in the fit room, grouped by slot.
+  const wardrobe = useMemo(() => {
+    const out: Record<Slot, Product[]> = { top: [], outer: [], bottom: [], head: [] };
+    for (const p of products) {
+      const k = slotOf(p);
+      if (k && (p.live || p.id === productId) && (p.shape || k === "head")) out[k].push(p);
     }
-    return list.slice(0, 4);
+    return out;
   }, [products, productId]);
+  const byId = (id?: string) => (id ? products.find((p) => p.id === id) : undefined);
 
-  const [gi, setGi] = useState(() => Math.max(0, garments.findIndex((p) => p.id === productId)));
-  const [sizePick, setSizePick] = useState<string | undefined>();
-  const [spin, setSpin] = useState(0);
+  // The outfit: one piece per slot, starting with the piece the room was opened for.
+  const [outfit, setOutfit] = useState<Partial<Record<Slot, string>>>(() => {
+    const o: Partial<Record<Slot, string>> = {};
+    const opened = byId(productId);
+    const k = opened && slotOf(opened);
+    if (opened && k) o[k] = opened.id;
+    for (const [slot, id] of Object.entries(DEFAULTS) as [Slot, string][]) if (!o[slot] && byId(id)) o[slot] = id;
+    return o;
+  });
+  const [focusId, setFocusId] = useState<string | undefined>(() => (byId(productId) && slotOf(byId(productId)!) ? productId : outfit.top ?? outfit.bottom));
+  const [shelf, setShelf] = useState<Slot>(() => (byId(focusId) && slotOf(byId(focusId)!)) || "top");
+  const [sizes, setSizes] = useState<Record<string, string>>({});
+  const [colours, setColours] = useState<Record<string, string>>({});
+  const [heat, setHeat] = useState(false);
+  const [cam, setCam] = useState<Focus>("full");
+  const [turn, setTurn] = useState({ yaw: 0, n: 0 });
+  const [dragging, setDragging] = useState(false);
+  const [skin, setSkin] = useLocal("crate-fit-skin", SKINS[1]);
+  const [hair, setHair] = useLocal("crate-fit-hair", HAIRS[0]);
   const [product, setProduct] = useState<"body" | "product">("body");
-  const view = SPIN[spin % 4];
-  const g = garments[gi] ?? garments[0];
+  const faceUrl = useImage("fit-face");
 
-  const advice = g ? recommend(g, body) : undefined;
-  const size = sizePick && g?.sizes.includes(sizePick) ? sizePick : advice?.rec ?? g?.sizes[0] ?? "";
+  const g = byId(focusId);
+  const sizeFor = (p: Product) => {
+    const pick = sizes[p.id];
+    if (pick && p.sizes.includes(pick)) return pick;
+    return (p.measurements ? recommend(p, body).rec : undefined) ?? p.sizes[0] ?? "";
+  };
+  const colourFor = (p: Product) => (colours[p.id] && p.colourways.includes(colours[p.id]) ? colours[p.id] : p.colourways[0]);
+
+  const advice = g?.measurements ? recommend(g, body) : undefined;
+  const size = g ? sizeFor(g) : "";
   const fit = g ? fitSize(g, body, size) : undefined;
-  const geo = avatarGeometry(body, g?.shape ? { shape: g.shape, m: g.measurements?.[size] } : undefined);
   const row = SIZE_CHART.find((r) => r.size === size);
+  const setSizePick = (l: string) => g && setSizes((m) => ({ ...m, [g.id]: l }));
+  const resetPick = () => g && setSizes((m) => {
+    const { [g.id]: _, ...rest } = m;
+    return rest;
+  });
+
+  const worn = (Object.entries(outfit) as [Slot, string][]).map(([slot, id]) => ({ slot, p: byId(id) })).filter((x): x is { slot: Slot; p: Product } => !!x.p);
+  const wear: Wear[] = useMemo(() => worn.map(({ slot, p }) => {
+    const z = sizeFor(p);
+    const f = fitSize(p, body, z);
+    const zones: Record<string, Level> = {};
+    for (const zn of f?.zones ?? []) zones[zn.k] = zn.level;
+    return { id: p.id, slot, shape: p.shape, fitStyle: p.fitStyle, m: p.measurements?.[z], colour: swatch(colourFor(p)), zones, name: p.name };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [JSON.stringify(outfit), sizes, colours, body, products]);
+
+  const equip = (p: Product) => {
+    const k = slotOf(p);
+    if (!k) return;
+    if (outfit[k] === p.id) {
+      // Second tap on the focused piece takes it off (the bottom slot is never left empty).
+      if (focusId === p.id && k !== "bottom") {
+        setOutfit((o) => ({ ...o, [k]: undefined }));
+        setFocusId(worn.find((x) => x.p.id !== p.id)?.p.id);
+        return;
+      }
+    } else setOutfit((o) => ({ ...o, [k]: p.id }));
+    setFocusId(p.id);
+    setCam(k === "bottom" ? "bottom" : "top");
+  };
+  const unequip = (k: Slot) => {
+    const id = outfit[k];
+    setOutfit((o) => ({ ...o, [k]: undefined }));
+    if (id === focusId) setFocusId(worn.find((x) => x.slot !== k)?.p.id);
+  };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeFitRoom();
@@ -66,76 +164,32 @@ function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit" | "real"; prod
     };
   }, []);
 
-  // Drag across the stage to turn the avatar: front → side → back → side.
-  const drag = useRef<{ x: number; start: number } | null>(null);
-  const [dragging, setDragging] = useState(false);
-  const onDown = (e: React.PointerEvent) => {
-    if ((e.target as HTMLElement).closest("button")) return;
-    drag.current = { x: e.clientX, start: spin };
-    setDragging(true);
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  const guestGate = () => {
+    if (s.session.role !== "guest") return false;
+    closeFitRoom();
+    toast("Sign in to add pieces to your bag.");
+    router.push(`/signin?next=/product/${g?.id ?? ""}`);
+    return true;
   };
-  const onMove = (e: React.PointerEvent) => {
-    if (!drag.current) return;
-    const steps = Math.round((e.clientX - drag.current.x) / 70);
-    setSpin((((drag.current.start + steps) % 4) + 4) % 4);
-  };
-  const onUp = () => {
-    drag.current = null;
-    setDragging(false);
-  };
-
-  const resetPick = () => setSizePick(undefined);
-
-  const available = !!g && !!size && (g.stock[size] ?? 0) > 0;
+  const inStock = (p: Product, z: string) => (p.stock[z] ?? 0) > 0;
+  const available = !!g && !!size && inStock(g, size);
   const add = () => {
-    if (!g || !size) return;
-    if (s.session.role === "guest") {
-      closeFitRoom();
-      toast("Sign in to add pieces to your bag.");
-      router.push(`/signin?next=/product/${g.id}`);
-      return;
-    }
-    addToBag(g.id, size, g.colourways[0]);
+    if (!g || !size || guestGate()) return;
+    addToBag(g.id, size, colourFor(g));
+  };
+  const lookable = worn.filter(({ p }) => inStock(p, sizeFor(p)));
+  const lookTotal = lookable.reduce((t, { p }) => t + p.price, 0);
+  const addLook = () => {
+    if (guestGate()) return;
+    for (const { p } of lookable) addToBag(p.id, sizeFor(p), colourFor(p));
   };
 
   const rec = advice?.rec;
-  const ctaLabel = !g ? "Pick a garment" : available ? `Add ${size} to bag` : `${size} is sold out`;
+  const ctaLabel = !g ? "Pick a piece" : available ? `Add ${size} to bag` : `${size} is sold out`;
   const overrides = overrideCount(profile);
   const zones = fit?.zones ?? [];
-  const verdict = fit?.verdict ?? "No specs yet";
-  const verdictAccent = fit ? fit.verdictAccent : true;
-
-  const views: [View, string, number][] = [["front", "Front", 0], ["side", "Side", 1], ["back", "Back", 2]];
-  const stroke = { stroke: "var(--color-neutral-500)", strokeWidth: 1.5, vectorEffect: "non-scaling-stroke" as const };
-  const { head: hd } = geo;
-
-  const avatar = (
-    <div className="avatar">
-      <svg viewBox="0 0 200 440" aria-label={`Avatar wearing ${g?.name ?? "nothing"} in ${size}, ${view} view`}>
-        <ellipse cx="100" cy="428" rx={view === "side" ? Math.round(geo.shadowRx * 0.6) : geo.shadowRx} ry="7" fill="var(--color-neutral-300)" />
-        {/* Side view: the same silhouette narrowed, as the old avatar did. */}
-        <g transform={view === "side" ? "translate(100 0) scale(0.6 1) translate(-100 0)" : undefined}>
-          <path d={geo.legs} fill="var(--color-neutral-200)" {...stroke} />
-          <path d={geo.torso} fill="var(--color-neutral-200)" {...stroke} />
-          <path d={geo.arms} fill="var(--color-neutral-200)" {...stroke} />
-          <path d={geo.neck} fill="var(--color-neutral-200)" {...stroke} />
-          {geo.garment && (
-            <g>
-              <path d={geo.garment.path} fill={geo.garment.fill} stroke="var(--color-text)" strokeWidth="1.5" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-              {view !== "back" && <path d={geo.garment.detail} fill="none" stroke={geo.garment.det} strokeWidth="1.5" vectorEffect="non-scaling-stroke" />}
-            </g>
-          )}
-        </g>
-        <circle cx={hd.cx} cy={hd.cy} r={hd.r} fill="var(--color-neutral-200)" {...stroke} />
-      </svg>
-      {view === "front" && (
-        <div className="face" style={{ left: `${((hd.cx - hd.r) / 200) * 100}%`, top: `${((hd.cy - hd.r) / 440) * 100}%`, width: `${((hd.r * 2) / 200) * 100}%`, height: `${((hd.r * 2) / 440) * 100}%` }}>
-          <ImageSlot id="fit-face" round />
-        </div>
-      )}
-    </div>
-  );
+  const verdict = fit?.verdict ?? (g?.measurements ? "No specs yet" : "One size");
+  const verdictAccent = fit ? fit.verdictAccent : false;
 
   // Product chart: four key garment measurements, widths doubled to circumferences.
   const productCols = (g && isBottom(g) ? BOTTOM_MEASURES : TOP_MEASURES).filter((c) => c.k !== "hemW" && c.k !== "shoulder" && c.k !== "rise").slice(0, 4);
@@ -146,7 +200,7 @@ function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit" | "real"; prod
       <div className="fit" role="dialog" aria-modal="true" aria-label="Fit room">
         <div className="fit-tabs">
           <button className={`pick ${tab === "guide" ? "acc" : ""}`} onClick={() => setFitTab("guide")}>01 Size guide</button>
-          <button className={`pick ${tab === "fit" ? "acc" : ""}`} onClick={() => setFitTab("fit")}>02 Fit<span className="only-d">&nbsp;by zone</span></button>
+          <button className={`pick ${tab === "fit" ? "acc" : ""}`} onClick={() => setFitTab("fit")}>02 Fit<span className="only-d">&nbsp;in 3D</span></button>
           <button className={`pick ${tab === "real" ? "acc" : ""}`} onClick={() => setFitTab("real")}>03<span className="only-d">&nbsp;Real</span> try-on</button>
           <button className="close" onClick={closeFitRoom}>Close ×</button>
         </div>
@@ -157,15 +211,71 @@ function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit" | "real"; prod
           <div className="fit-body">
             <div className="fit-ctl">
               <section>
+                <span className="label">Wardrobe</span>
+                <div className="shelf-tabs cells boxed">
+                  {SLOTS.filter((x) => wardrobe[x.k].length).map((x) => (
+                    <button key={x.k} className={`pick ${shelf === x.k ? "on" : ""}`} onClick={() => setShelf(x.k)}>{x.l}</button>
+                  ))}
+                </div>
+                <div className="shelf">
+                  {wardrobe[shelf].map((p) => {
+                    const on = outfit[shelf] === p.id;
+                    return (
+                      <button key={p.id} className={`item ${on ? "on" : ""} ${focusId === p.id ? "focus" : ""}`} onClick={() => equip(p)} aria-pressed={on}>
+                        <span className="ph"><ImageSlot id={productImg(p.id)} src={p.photo} placeholder={p.name} fit="contain" /><i className="dot" style={{ background: swatch(colourFor(p)) }} /></span>
+                        <b>{p.name}</b>
+                        <span>{on ? (focusId === p.id && shelf !== "bottom" ? "Wearing · tap to take off" : "Wearing") : money(p.price)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+              {g && (
+                <section>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", gap: 8 }}>
+                    <span className="muted">{g.name}</span>
+                    {rec && <span style={{ color: "var(--color-accent-700)", fontWeight: 600, whiteSpace: "nowrap" }}>We recommend {rec}</span>}
+                  </div>
+                  <div className="fsizes cells boxed" style={{ gridTemplateColumns: `repeat(${Math.max(1, g.sizes.length)}, 1fr)` }}>
+                    {g.sizes.map((l) => (
+                      <button key={l} className={`pick ${l === size ? "on" : l === rec ? "rec" : ""}`} onClick={() => setSizePick(l)} aria-pressed={l === size}>
+                        <span>{l}</span>
+                        <small>{l === rec ? "FOR YOU" : " "}</small>
+                      </button>
+                    ))}
+                  </div>
+                  {g.colourways.length > 1 && (
+                    <div className="cw-row" role="radiogroup" aria-label="Colour">
+                      {g.colourways.map((c) => (
+                        <button key={c} role="radio" aria-checked={c === colourFor(g)} aria-label={c} title={c} className={`swatch ${c === colourFor(g) ? "on" : ""}`} style={{ background: swatch(c) }} onClick={() => setColours((m) => ({ ...m, [g.id]: c }))} />
+                      ))}
+                      <span className="muted" style={{ fontSize: 13 }}>{colourFor(g)}</span>
+                    </div>
+                  )}
+                  {advice && <p className="why">{advice.why}</p>}
+                  <div className="zones-m">
+                    {zones.map((z) => <div key={z.k}><span className="muted">{z.k}</span><b>{z.label} <span className="muted">{z.short}</span></b></div>)}
+                  </div>
+                </section>
+              )}
+              <section>
                 <span className="label">Your body</span>
-                <BodySliders profile={profile} onChange={resetPick} />
+                <BodySliders profile={profile} onChange={() => setSizes({})} />
                 <details className="measures-d">
                   <summary>
                     <span>Your measurements</span>
                     <span className="muted">{overrides ? `${overrides} of 6 yours, rest estimated` : "Estimated from height and weight"}</span>
                   </summary>
-                  <BodyMeasures profile={profile} onChange={resetPick} />
+                  <BodyMeasures profile={profile} onChange={() => setSizes({})} />
                 </details>
+                <div className="look-row">
+                  <span className="muted">Skin</span>
+                  <div className="cw-row">{SKINS.map((c) => <button key={c} aria-label={`Skin tone ${c}`} className={`swatch ${skin === c ? "on" : ""}`} style={{ background: c }} onClick={() => setSkin(c)} />)}</div>
+                </div>
+                <div className="look-row">
+                  <span className="muted">Hair</span>
+                  <div className="cw-row">{HAIRS.map((c) => <button key={c} aria-label={`Hair colour ${c}`} className={`swatch ${hair === c ? "on" : ""}`} style={{ background: c }} onClick={() => setHair(c)} />)}</div>
+                </div>
                 <div className="face-row">
                   <div className="ph"><ImageSlot id="fit-face" round editable placeholder="face" /></div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -174,55 +284,48 @@ function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit" | "real"; prod
                   </div>
                 </div>
               </section>
-              <section>
-                <span className="label">Garment</span>
-                <div className="garm cells boxed">
-                  {garments.map((p, i) => (
-                    <button key={p.id} className={`pick ${i === gi ? "on" : ""}`} onClick={() => (setGi(i), resetPick())}>
-                      <b><span className="only-d">{p.name}</span><span className="only-m">{SHORT[p.id] ?? p.name}</span></b>
-                      <span className="pr">{money(p.price)}</span>
-                    </button>
-                  ))}
-                </div>
-              </section>
-              <section>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase" }}>
-                  <span className="muted">Size</span>
-                  {rec && <span style={{ color: "var(--color-accent-700)", fontWeight: 600 }}>We recommend {rec}</span>}
-                </div>
-                <div className="fsizes cells boxed" style={{ gridTemplateColumns: `repeat(${Math.max(1, g?.sizes.length ?? 1)}, 1fr)` }}>
-                  {(g?.sizes ?? []).map((l) => (
-                    <button key={l} className={`pick ${l === size ? "on" : l === rec ? "rec" : ""}`} onClick={() => setSizePick(l)} aria-pressed={l === size}>
-                      <span>{l}</span>
-                      <small>{l === rec ? "FOR YOU" : " "}</small>
-                    </button>
-                  ))}
-                </div>
-                {advice && <p className="why">{advice.why}</p>}
-                <div className="zones-m">
-                  {zones.map((z) => <div key={z.k}><span className="muted">{z.k}</span><b>{z.label} <span className="muted">{z.short}</span></b></div>)}
-                </div>
-              </section>
             </div>
 
-            <div className={`stage ${dragging ? "dragging" : ""}`} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
-              <div className="grid-bg" />
+            <div className={`stage lobby ${dragging ? "dragging" : ""}`}>
+              <Lobby3D body={body} wear={wear} skin={skin} hair={hair} faceUrl={faceUrl} heat={heat} focus={cam} turn={turn} onDragChange={setDragging} />
               <div className="top">
                 <div className="views">
-                  {views.map(([k, l, idx]) => (
-                    <button key={k} className={`pick ${view === k ? "on" : ""}`} onClick={() => setSpin(idx)}>{l}</button>
+                  {VIEWS.map(([l, yaw]) => (
+                    <button key={l} className="pick" onClick={() => setTurn((t) => ({ yaw, n: t.n + 1 }))}>{l}</button>
                   ))}
                 </div>
-                <span className="hint muted" style={{ fontSize: 12 }}>Drag to rotate · 360°</span>
+                <div className="views">
+                  <button className={`pick ${cam === "full" ? "on" : ""}`} onClick={() => setCam("full")}>Full look</button>
+                  <button className={`pick ${heat ? "on" : ""}`} onClick={() => setHeat(!heat)} aria-pressed={heat}>Fit heat</button>
+                </div>
               </div>
-              <div className={`verdict-m ${verdictAccent ? "acc" : ""}`}>{verdict}</div>
-              {avatar}
-              <div className="cap"><b>{g?.name} · {size}</b><span className="muted">on {h} cm / {w} kg · chest {body.chest}</span></div>
+              {heat && (
+                <div className="heat-key" aria-label="Fit heat key">
+                  <span><i style={{ background: "#e0321b" }} />Tight</span>
+                  <span><i style={{ background: "#3aa76d" }} />Right</span>
+                  <span><i style={{ background: "#2f5fc4" }} />Loose</span>
+                </div>
+              )}
+              <div className="loadout">
+                {SLOTS.map(({ k }) => {
+                  const p = byId(outfit[k]);
+                  if (!p) return null;
+                  return (
+                    <div key={k} className={`chip ${focusId === p.id ? "on" : ""}`}>
+                      <button className="unbtn" onClick={() => { setFocusId(p.id); setShelf(k); setCam(k === "bottom" ? "bottom" : "top"); }}>
+                        <span className="muted">{SLOT_ONE[k]}</span> <b>{p.name}</b> · {sizeFor(p)}
+                      </button>
+                      {k !== "bottom" && <button className="unbtn x" aria-label={`Take off ${p.name}`} onClick={() => unequip(k)}>×</button>}
+                    </div>
+                  );
+                })}
+              </div>
+              <span className="hint drag-hint">Drag to turn · scroll to zoom</span>
             </div>
 
             <div className="fit-res">
               <div className={`verdict ${verdictAccent ? "acc" : ""}`}>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>Overall fit · {size}</span>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{g ? `${g.name} · ${size}` : "Overall fit"}</span>
                 <b>{verdict}</b>
               </div>
               <div className="zones">
@@ -232,14 +335,19 @@ function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit" | "real"; prod
                     <div className="bar">{z.bar.map((c, i) => <span key={i} style={{ background: c }} />)}</div>
                   </div>
                 ))}
-                {!zones.length && <div className="zone muted" style={{ fontSize: 13 }}>{advice?.why ?? "Pick a garment."}</div>}
+                {!zones.length && <div className="zone muted" style={{ fontSize: 13 }}>{advice?.why ?? (g ? "No fit to check: this piece is one size." : "Pick a piece.")}</div>}
               </div>
               <div className="scale-note muted" style={{ fontSize: 12, padding: "14px 24px" }}>
-                Scale: tight ← → loose, against the room this {g?.fitStyle ?? "regular"} cut is designed to have. Uses {overrides ? "your measurements" : "measurements estimated from your height and weight"} and this piece&rsquo;s garment specs.
+                On {h} cm / {w} kg · chest {body.chest}. Scale: tight ← → loose, against the room this {g?.fitStyle ?? "regular"} cut is designed to have. Uses {overrides ? "your measurements" : "measurements estimated from your height and weight"}.
               </div>
               <div className="cta">
                 <button className="btn btn-primary row h56" onClick={add} disabled={!available} style={{ fontSize: 15 }}><span>{ctaLabel}</span><span>→</span></button>
-                {rec && <button className="btn btn-secondary row h44 use-rec" onClick={resetPick}><span>Use recommended ({rec})</span><span>↺</span></button>}
+                {worn.length > 1 && (
+                  <button className="btn btn-secondary row h44" onClick={addLook} disabled={!lookable.length}>
+                    <span>Add the look ({lookable.length})</span><span>{money(lookTotal)} →</span>
+                  </button>
+                )}
+                {rec && sizes[g!.id] && sizes[g!.id] !== rec && <button className="btn btn-secondary row h44 use-rec" onClick={resetPick}><span>Use recommended ({rec})</span><span>↺</span></button>}
               </div>
             </div>
           </div>
