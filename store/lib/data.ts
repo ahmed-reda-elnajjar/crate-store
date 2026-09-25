@@ -3,6 +3,35 @@
 
 export type CategoryKey = "tops" | "bottoms" | "outerwear" | "accessories";
 export type FitShape = "jacket" | "tee" | "hoodie" | "pants";
+/** How much room the cut is designed to leave; sets the ease the fit engine aims for. */
+export type FitStyle = "slim" | "regular" | "oversized";
+export const FIT_STYLES: FitStyle[] = ["slim", "regular", "oversized"];
+
+export type TopMeasure = "chestW" | "waistW" | "hemW" | "length" | "sleeve" | "shoulder";
+export type BottomMeasure = "waistW" | "hipW" | "thighW" | "inseam" | "rise";
+export type MeasureKey = TopMeasure | BottomMeasure;
+/** Garment measurements in cm, taken flat. Widths (…W) are half the circumference. */
+export type Measurements = Partial<Record<MeasureKey, number>>;
+
+export const TOP_MEASURES: { k: TopMeasure; l: string }[] = [
+  { k: "chestW", l: "Chest width" },
+  { k: "waistW", l: "Waist width" },
+  { k: "hemW", l: "Hem width" },
+  { k: "length", l: "Body length" },
+  { k: "sleeve", l: "Sleeve length" },
+  { k: "shoulder", l: "Shoulder width" },
+];
+
+export const BOTTOM_MEASURES: { k: BottomMeasure; l: string }[] = [
+  { k: "waistW", l: "Waist width" },
+  { k: "hipW", l: "Hip width" },
+  { k: "thighW", l: "Thigh width" },
+  { k: "inseam", l: "Inseam" },
+  { k: "rise", l: "Rise" },
+];
+
+/** Bottoms are measured and drawn as trousers; everything else as a top. */
+export const isBottom = (p: Pick<Product, "shape" | "category">) => (p.shape ? p.shape === "pants" : p.category === "bottoms");
 
 export interface Product {
   id: string;
@@ -22,6 +51,9 @@ export interface Product {
   shape?: FitShape;
   /** Built-in product photo (public/products), shown until an admin uploads one. */
   photo?: string;
+  fitStyle?: FitStyle;
+  /** Flat garment measurements per size label. */
+  measurements?: Record<string, Measurements>;
   live: boolean;
   /** Higher = newer; used for "Newest" sort. */
   added: number;
@@ -35,8 +67,32 @@ export const CATEGORIES: { key: CategoryKey; name: string }[] = [
 ];
 
 const APPAREL = ["S", "M", "L", "XL", "XXL"];
+const WAISTS = ["28", "30", "32", "34", "36"];
 
-export const SEED_PRODUCTS: Product[] = [
+/** Grade a size run from one base size: each size up adds `step`, each size down takes it off. */
+function graded(sizes: string[], base: string, m: Measurements, step: Measurements): Record<string, Measurements> {
+  const b = sizes.indexOf(base);
+  return Object.fromEntries(
+    sizes.map((z, i) => [z, Object.fromEntries(Object.entries(m).map(([k, v]) => [k, Math.round((v + (i - b) * (step[k as MeasureKey] ?? 0)) * 2) / 2]))]),
+  );
+}
+
+// Seed garment specs (flat, cm). Invented but realistic for each cut; admins edit them in /admin.
+const TOP_STEP: Measurements = { chestW: 2.5, waistW: 2.5, hemW: 2.5, length: 1.5, sleeve: 1, shoulder: 1.5 };
+const BOTTOM_STEP: Measurements = { waistW: 2.5, hipW: 2.5, thighW: 1.2, inseam: 0, rise: 0.6 };
+const SPECS: Record<string, Pick<Product, "fitStyle" | "measurements">> = {
+  "boxy-heavy-tee": { fitStyle: "oversized", measurements: graded(APPAREL, "M", { chestW: 60, waistW: 59, hemW: 59, length: 71, sleeve: 23, shoulder: 55 }, { ...TOP_STEP, sleeve: 0.8 }) },
+  "double-knee-carpenter": { fitStyle: "regular", measurements: graded(WAISTS, "32", { waistW: 42.5, hipW: 53.5, thighW: 33, inseam: 81, rise: 29 }, BOTTOM_STEP) },
+  "nylon-track-jacket": { fitStyle: "oversized", measurements: graded(APPAREL, "M", { chestW: 60.5, waistW: 59.5, hemW: 57, length: 72, sleeve: 60, shoulder: 54 }, TOP_STEP) },
+  "480gsm-hoodie": { fitStyle: "oversized", measurements: graded(APPAREL, "M", { chestW: 60, waistW: 59, hemW: 56.5, length: 71, sleeve: 61, shoulder: 54 }, TOP_STEP) },
+  "ripstop-cargo-short": { fitStyle: "regular", measurements: graded(WAISTS, "32", { waistW: 42.5, hipW: 55, thighW: 34, inseam: 20, rise: 29.5 }, BOTTOM_STEP) },
+  "puffer-vest": { fitStyle: "regular", measurements: graded(["S", "M", "L", "XL"], "M", { chestW: 56, waistW: 55, hemW: 55, length: 70, shoulder: 46 }, TOP_STEP) },
+  "fleece-quarter-zip": { fitStyle: "regular", measurements: graded(["M", "L", "XL"], "M", { chestW: 58, waistW: 57, hemW: 54, length: 71, sleeve: 64, shoulder: 49 }, TOP_STEP) },
+  "racing-crew": { fitStyle: "oversized", measurements: graded(APPAREL, "M", { chestW: 60, waistW: 59, hemW: 56, length: 71, sleeve: 60, shoulder: 53 }, TOP_STEP) },
+  "moto-bomber": { fitStyle: "oversized", measurements: graded(APPAREL, "M", { chestW: 61, waistW: 59, hemW: 56, length: 69, sleeve: 61, shoulder: 53 }, TOP_STEP) },
+};
+
+export const SEED_PRODUCTS: Product[] = ([
   { id: "boxy-heavy-tee", name: "Boxy Heavy Tee", price: 48, category: "tops", colourways: ["Bone", "Black", "Ash", "Olive"], sizes: APPAREL, stock: { S: 30, M: 40, L: 30, XL: 14, XXL: 6 }, tag: "New", drop: "07", fabric: "240gsm organic cotton jersey", fit: "Boxy, cropped body", shape: "tee", live: true, added: 10 },
   { id: "double-knee-carpenter", name: "Double-Knee Carpenter", price: 128, category: "bottoms", colourways: ["Black", "Tan", "Grey"], sizes: ["28", "30", "32", "34", "36"], stock: { "28": 8, "30": 16, "32": 20, "34": 14, "36": 6 }, drop: "07", fabric: "12oz cotton canvas", fit: "Relaxed, straight leg", shape: "pants", live: true, added: 9 },
   { id: "nylon-track-jacket", name: "Nylon Track Jacket", price: 165, category: "outerwear", colourways: ["Black", "Stone"], sizes: APPAREL, stock: { S: 3, M: 4, L: 2 }, run: 250, tag: "Low stock", drop: "07", fabric: "100% recycled nylon, mesh lining", fit: "Oversized, dropped shoulder", shape: "jacket", photo: "/products/red.jpg", live: true, added: 8 },
@@ -47,7 +103,7 @@ export const SEED_PRODUCTS: Product[] = [
   { id: "5-panel-cap", name: "5-Panel Cap", price: 38, category: "accessories", colourways: ["Black", "White", "Red", "Olive", "Navy", "Sand"], sizes: ["One size"], stock: {}, tag: "Sold out", drop: "06", fabric: "Nylon, adjustable strap", fit: "One size", live: true, added: 3 },
   { id: "racing-crew", name: "Racing Crew", price: 110, category: "tops", colourways: ["Black", "Red"], sizes: APPAREL, stock: { S: 6, M: 10, L: 10, XL: 6, XXL: 2 }, drop: "07", fabric: "380gsm loopback cotton", fit: "Boxy", shape: "hoodie", photo: "/products/black.jpg", live: true, added: 2 },
   { id: "moto-bomber", name: "Moto Bomber", price: 210, category: "outerwear", colourways: ["Black"], sizes: APPAREL, stock: { S: 4, M: 6, L: 6, XL: 3 }, run: 150, drop: "07", fabric: "Waxed cotton, quilted lining", fit: "Cropped, boxy", shape: "jacket", photo: "/products/olive.jpg", live: true, added: 1 },
-];
+] as Product[]).map((p) => ({ ...p, ...SPECS[p.id] }));
 
 export type SectionKey = "hero" | "countdown" | "grid" | "wear" | "cats" | "news";
 
@@ -89,9 +145,9 @@ export interface WearFit {
   neck?: number;
 }
 
-export interface WearSettings {
+export interface WearSettings extends WearFit {
   garmentIds: string[];
-  /** Per-garment fit; garments without an entry use the shared topPct/scalePct/xPct. */
+  /** Per-garment fit; garments without an entry use the shared topPct/scalePct/xPct above. */
   fits?: Record<string, WearFit>;
   /**
    * Aligned mode: each garment photo has the same canvas as the model photo
@@ -103,13 +159,13 @@ export interface WearSettings {
   alignedFits?: Record<string, WearFit>;
   /** Built-in photos (public/lookbook) used until an admin uploads replacements. "model" is the model photo. */
   images?: Record<string, string>;
-  topPct: number;
-  scalePct: number;
-  xPct: number;
   colorPhotos: boolean;
   rotateSeconds: number;
   title: string;
 }
+
+export const wearFitOf = (wear: WearSettings, productId: string): WearFit =>
+  wear.fits?.[productId] ?? { topPct: wear.topPct, scalePct: wear.scalePct, xPct: wear.xPct };
 
 export const SEED_WEAR: WearSettings = {
   // Garment photos were fitted to the model photo offline (tools/fit-jackets.py), so they overlay 1:1.

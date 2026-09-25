@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { Product } from "@/lib/data";
-import { FIT_SIZES, recommendSize } from "@/lib/fit";
+import { recommend, resolveBody } from "@/lib/fit";
 import { money } from "@/lib/format";
 import { getImageBlob, putImage, removeImage, useImage } from "@/lib/images";
 import { clearLooks, closeFitRoom, removeLook, saveLook, setFitTab, setTryonConsent, siteFor, toast, useStore } from "@/lib/store";
@@ -99,7 +99,10 @@ export function RealTryOn({ productId }: { productId?: string }) {
   }, [pieces, productId]);
 
   const chosen = ([0, 1, 2] as Layer[]).map((l) => pieces.find((p) => p.id === picked[l])).filter((p): p is Product => !!p);
-  const rec = FIT_SIZES[recommendSize(s.fit.h, s.fit.w).rec];
+  const body = resolveBody(s.fit);
+  const sizeOf = (p: Product) => (p.measurements ? recommend(p, body).rec : undefined);
+  const lead = [...chosen].reverse().find((p) => sizeOf(p));
+  const rec = lead ? sizeOf(lead) : undefined;
 
   const garmentSrc = async (p: Product) => (await getImageBlob(productImg(p.id)).catch(() => undefined)) ?? p.photo!;
 
@@ -276,13 +279,13 @@ export function RealTryOn({ productId }: { productId?: string }) {
       <div className="fit-res">
         <div className="verdict">
           <span style={{ fontSize: 13, fontWeight: 600 }}>Your size</span>
-          <b>{rec}</b>
-          <span style={{ fontSize: 12 }}>From your height and weight. Check each zone in 02.</span>
+          <b>{rec ?? "—"}</b>
+          <span style={{ fontSize: 12 }}>{lead ? `${lead.name}, from your body profile. Check each zone in 02.` : "Pick a measured piece to see your size."}</span>
         </div>
         <div className="real-side">
           <span className="label">This look</span>
           {chosen.length ? chosen.map((p) => (
-            <div key={p.id} className="real-line"><span>{p.name}</span><span>{money(p.price)}</span></div>
+            <div key={p.id} className="real-line"><span>{p.name}{sizeOf(p) ? ` · ${sizeOf(p)}` : ""}</span><span>{money(p.price)}</span></div>
           )) : <span className="muted" style={{ fontSize: 13 }}>Nothing picked yet.</span>}
           {s.looks.length > 0 && (
             <>

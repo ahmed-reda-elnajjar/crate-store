@@ -4,11 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Footer, Header } from "@/components/Header";
+import { BodyMeasures, BodySliders } from "@/components/BodyProfile";
 import { ProductCard } from "@/components/ProductCard";
-import { NEXT_DROP, type Order } from "@/lib/data";
-import { recommendSize, FIT_SIZES } from "@/lib/fit";
+import { NEXT_DROP, isBottom, type Order } from "@/lib/data";
+import { recommend, resolveBody } from "@/lib/fit";
 import { longDate, money2 } from "@/lib/format";
-import { addToBag, openFitRoom, setFit, siteFor, signOut, toast, useHydrated, useStore } from "@/lib/store";
+import { addToBag, openFitRoom, siteFor, signOut, toast, useHydrated, useStore } from "@/lib/store";
 
 type Tab = "orders" | "wishlist" | "fit" | "details";
 const TAG: Record<Order["status"], string> = { "In transit": "tag tag-accent", Processing: "tag tag-accent", Delivered: "tag tag-neutral", Returned: "tag tag-outline" };
@@ -57,7 +58,16 @@ export default function Account() {
   const first = name.split(" ")[0] || "there";
   const earlyAt = new Date(NEXT_DROP.at.getTime() - NEXT_DROP.earlyAccessMinutes * 60000);
   const early = earlyAt.toLocaleString("en-GB", { timeZone: "Europe/Berlin", weekday: "short", hour: "2-digit", minute: "2-digit" }).replace(",", "");
-  const rec = FIT_SIZES[recommendSize(s.fit.h, s.fit.w).rec];
+  const body = resolveBody(s.fit);
+  // One recommendation per kind of piece, from the first live product with specs.
+  const recs = [
+    products.find((p) => p.live && p.measurements && !isBottom(p) && p.category === "tops"),
+    products.find((p) => p.live && p.measurements && p.category === "outerwear"),
+    products.find((p) => p.live && p.measurements && isBottom(p)),
+  ].flatMap((p) => {
+    const rec = p && recommend(p, body).rec;
+    return p && rec ? [{ p, rec }] : [];
+  });
 
   const act = (o: Order) => {
     if (o.status === "Delivered") {
@@ -149,11 +159,17 @@ export default function Account() {
           )}
 
           {tab === "fit" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 480 }}>
-              <p className="muted" style={{ margin: 0 }}>Your fit profile sets the size we recommend in the fit room.</p>
-              <label className="slider"><span className="t"><span>Height</span><b>{s.fit.h} cm</b></span><input type="range" min={150} max={200} value={s.fit.h} onChange={(e) => setFit({ h: +e.target.value })} /></label>
-              <label className="slider"><span className="t"><span>Weight</span><b>{s.fit.w} kg</b></span><input type="range" min={45} max={130} value={s.fit.w} onChange={(e) => setFit({ w: +e.target.value })} /></label>
-              <span style={{ fontSize: 15 }}>We recommend <b>{rec}</b> in tops and outerwear.</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 560 }}>
+              <p className="muted" style={{ margin: 0 }}>Your fit profile sets the size we recommend in the fit room. Height and weight are enough to start; add your own measurements for a closer fit.</p>
+              <BodySliders profile={s.fit} />
+              <span className="label">Measurements · cm</span>
+              <BodyMeasures profile={s.fit} />
+              <span className="muted" style={{ fontSize: 12 }}>Grey values are estimates from your height and weight. Type your own to replace them; clear a field or press reset to go back to the estimate.</span>
+              {recs.length > 0 && (
+                <div className="spec">
+                  {recs.map(({ p, rec }) => <div key={p.id} style={{ gridTemplateColumns: "1fr auto" }}><span>{p.name}</span><span>We recommend <b>{rec}</b></span></div>)}
+                </div>
+              )}
               <button className="btn btn-primary row h52" onClick={() => openFitRoom("fit")}><span>Open the fit room</span><span>→</span></button>
             </div>
           )}

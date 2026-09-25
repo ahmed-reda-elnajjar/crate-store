@@ -6,7 +6,7 @@ import type { Product, WearFit, WearSettings } from "@/lib/data";
 import { cutoutGarment } from "@/lib/cutout";
 import { money } from "@/lib/format";
 import { getImageBlob, putImage } from "@/lib/images";
-import { toast, updateWear } from "@/lib/store";
+import { toast, updateProduct, updateWear } from "@/lib/store";
 import { ImageSlot } from "./ImageSlot";
 
 const wearImg = (productId: string) => `wear-g-${productId}`;
@@ -286,13 +286,13 @@ export function WearCarousel({ wear, products, editable, standalone }: { wear: W
           <Link href={`/product/${cur.id}`} className="btn btn-primary row h52"><span>Shop this piece</span><span>→</span></Link>
         </div>
       )}
-      {editable && <WearTools wear={wear} products={products} garments={G} idx={idx} onPick={setWi} />}
+      {editable && <WearTools wear={wear} products={products} garments={G} idx={idx} onPick={(i) => { setWi(i); setPlaying(false); }} onEdit={() => setPlaying(false)} />}
     </section>
   );
 }
 
 /** The fit bar and garment strip under the stage in 5a. Admin-only; edits go to the draft. */
-function WearTools({ wear, products, garments, idx, onPick }: { wear: WearSettings; products: Product[]; garments: Product[]; idx: number; onPick: (i: number) => void }) {
+function WearTools({ wear, products, garments, idx, onPick, onEdit }: { wear: WearSettings; products: Product[]; garments: Product[]; idx: number; onPick: (i: number) => void; onEdit: () => void }) {
   const addable = products.filter((p) => !wear.garmentIds.includes(p.id) && p.category !== "accessories");
   const cur = garments[idx];
   const f = cur ? fitOf(wear, cur.id) : fitOf(wear, "");
@@ -301,7 +301,11 @@ function WearTools({ wear, products, garments, idx, onPick }: { wear: WearSettin
   const [working, setWorking] = useState<string | null>(null);
 
   const r = rangeOf(wear);
-  const setFit = (patch: Partial<WearFit>) => cur && saveFit(wear, cur.id, patch);
+  const setFit = (patch: Partial<WearFit>) => {
+    if (!cur) return;
+    onEdit();
+    saveFit(wear, cur.id, patch);
+  };
   const applyToAll = () => updateWear({ [key]: Object.fromEntries(garments.map((g) => [g.id, f])) });
   const reset = () => {
     if (!cur || !wear[key]) return;
@@ -361,6 +365,11 @@ function WearTools({ wear, products, garments, idx, onPick }: { wear: WearSettin
                 <button className="unbtn u" onClick={() => onPick(i)}>{i === idx ? "Fitting" : "Fit"}</button>
                 <button className="unbtn u" disabled={working === p.id} onClick={() => void recut(p)}>{working === p.id ? "Working…" : "Remove bg"}</button>
               </div>
+              {!p.live && (
+                <button className="tag tag-outline" style={{ alignSelf: "flex-start", cursor: "pointer" }} onClick={() => updateProduct(p.id, { live: true })} title="Customers don't see hidden products. Click to make it live.">
+                  Hidden · make live
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -369,14 +378,14 @@ function WearTools({ wear, products, garments, idx, onPick }: { wear: WearSettin
             <label htmlFor="wear-add">Add a garment</label>
             <select id="wear-add" className="input" value="" onChange={(e) => e.target.value && updateWear({ garmentIds: [...wear.garmentIds, e.target.value] })}>
               <option value="">Choose a product…</option>
-              {addable.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              {addable.map((p) => <option key={p.id} value={p.id}>{p.name}{p.live ? "" : " (hidden)"}</option>)}
             </select>
           </div>
         )}
         <span className="muted" style={{ fontSize: 12 }}>
           {wear.aligned
-            ? "Each garment photo must be the same size as the model photo, with the garment exactly where it sits on her body and everything else plain white. The white is removed automatically, including the neck opening. Photos save straight away; fit settings go live when you publish."
-            : "Upload flat product shots on a plain white or grey background: the background is removed and the photo is trimmed to the garment, so every piece lines up at the collar. Use Neck opening to cut the inside of the collar away. Photos save straight away; fit settings go live when you publish."}
+            ? "Each garment photo must be the same size as the model photo, with the garment exactly where it sits on her body and everything else plain white. The white is removed automatically, including the neck opening. Photos save straight away; fit settings go live when you publish. Hidden products only show here, not to customers."
+            : "Upload flat product shots on a plain white or grey background: the background is removed and the photo is trimmed to the garment, so every piece lines up at the collar. Use Neck opening to cut the inside of the collar away. Photos save straight away; fit settings go live when you publish. Hidden products only show here, not to customers."}
         </span>
       </div>
     </div>

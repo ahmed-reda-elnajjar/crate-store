@@ -2,24 +2,19 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { SIZE_CHART, type Product } from "@/lib/data";
-import { FIT_SIZES, computeFit, type View } from "@/lib/fit";
+import { avatarGeometry } from "@/lib/avatar";
+import { BOTTOM_MEASURES, SIZE_CHART, TOP_MEASURES, isBottom, type Product } from "@/lib/data";
+import { fitSize, recommend, resolveBody } from "@/lib/fit";
 import { money } from "@/lib/format";
-import { addToBag, closeFitRoom, setFit, setFitTab, siteFor, toast, useStore } from "@/lib/store";
+import { addToBag, closeFitRoom, setFitTab, siteFor, toast, useStore } from "@/lib/store";
+import { BodyMeasures, BodySliders, overrideCount } from "./BodyProfile";
 import { ImageSlot } from "./ImageSlot";
 import { RealTryOn } from "./RealTryOn";
 
 const DEFAULT_GARMENTS = ["nylon-track-jacket", "boxy-heavy-tee", "480gsm-hoodie", "double-knee-carpenter"];
 const SHORT: Record<string, string> = { "nylon-track-jacket": "Track Jacket", "boxy-heavy-tee": "Heavy Tee", "480gsm-hoodie": "Hoodie", "double-knee-carpenter": "Carpenter" };
+type View = "front" | "side" | "back";
 const SPIN: View[] = ["front", "side", "back", "side"];
-
-/** Map a fit-room size (S…XXXL) onto the sizes a product is actually cut in. */
-function productSize(p: Product, idx: number): string | undefined {
-  const label = FIT_SIZES[idx];
-  if (p.sizes.includes(label)) return label;
-  if (p.sizes.every((x) => /^\d+$/.test(x))) return p.sizes[idx + 1]; // waist sizes: S→30 … XL→36
-  return undefined;
-}
 
 /** 3a (desktop modal) and 3b (mobile sheet): size guide + try-on. */
 export function FitRoom() {
@@ -33,7 +28,9 @@ function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit" | "real"; prod
   const s = useStore();
   const router = useRouter();
   const products = siteFor(s).products;
-  const { h, w } = s.fit;
+  const profile = s.fit;
+  const { h, w } = profile;
+  const body = resolveBody(profile);
 
   const garments = useMemo(() => {
     const list = DEFAULT_GARMENTS.map((id) => products.find((p) => p.id === id)).filter((p): p is Product => !!p && !!p.shape);
@@ -47,16 +44,17 @@ function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit" | "real"; prod
   }, [products, productId]);
 
   const [gi, setGi] = useState(() => Math.max(0, garments.findIndex((p) => p.id === productId)));
-  const [sizePick, setSizePick] = useState<number | undefined>();
+  const [sizePick, setSizePick] = useState<string | undefined>();
   const [spin, setSpin] = useState(0);
   const [product, setProduct] = useState<"body" | "product">("body");
   const view = SPIN[spin % 4];
   const g = garments[gi] ?? garments[0];
 
-  const fitRec = computeFit({ h, w, size: 0, shape: g?.shape ?? "tee", view }).rec;
-  const size = sizePick ?? fitRec;
-  const fit = computeFit({ h, w, size, shape: g?.shape ?? "tee", view });
-  const row = SIZE_CHART[size];
+  const advice = g ? recommend(g, body) : undefined;
+  const size = sizePick && g?.sizes.includes(sizePick) ? sizePick : advice?.rec ?? g?.sizes[0] ?? "";
+  const fit = g ? fitSize(g, body, size) : undefined;
+  const geo = avatarGeometry(body, g?.shape ? { shape: g.shape, m: g.measurements?.[size] } : undefined);
+  const row = SIZE_CHART.find((r) => r.size === size);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeFitRoom();
@@ -87,49 +85,61 @@ function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit" | "real"; prod
     setDragging(false);
   };
 
-  const setBody = (patch: { h?: number; w?: number }) => {
-    setFit(patch);
-    setSizePick(undefined);
-  };
+  const resetPick = () => setSizePick(undefined);
 
-  const target = g ? productSize(g, size) : undefined;
-  const available = !!g && !!target && (g.stock[target] ?? 0) > 0;
+  const available = !!g && !!size && (g.stock[size] ?? 0) > 0;
   const add = () => {
-    if (!g || !target) return;
+    if (!g || !size) return;
     if (s.session.role === "guest") {
       closeFitRoom();
       toast("Sign in to add pieces to your bag.");
       router.push(`/signin?next=/product/${g.id}`);
       return;
     }
-    addToBag(g.id, target, g.colourways[0]);
+    addToBag(g.id, size, g.colourways[0]);
   };
 
-  const sizeLabel = FIT_SIZES[size];
-  const recLabel = FIT_SIZES[fit.rec];
-  const ctaLabel = !g ? "Pick a garment" : !target ? `${g.name} isn't cut in ${sizeLabel}` : available ? `Add ${sizeLabel} to bag` : `${sizeLabel} is sold out`;
+  const rec = advice?.rec;
+  const ctaLabel = !g ? "Pick a garment" : available ? `Add ${size} to bag` : `${size} is sold out`;
+  const overrides = overrideCount(profile);
+  const zones = fit?.zones ?? [];
+  const verdict = fit?.verdict ?? "No specs yet";
+  const verdictAccent = fit ? fit.verdictAccent : true;
 
   const views: [View, string, number][] = [["front", "Front", 0], ["side", "Side", 1], ["back", "Back", 2]];
+  const stroke = { stroke: "var(--color-neutral-500)", strokeWidth: 1.5, vectorEffect: "non-scaling-stroke" as const };
+  const { head: hd } = geo;
 
   const avatar = (
     <div className="avatar">
-      <svg viewBox="0 0 200 440" aria-label={`Avatar wearing ${g?.name ?? "nothing"} in ${sizeLabel}, ${view} view`}>
-        <ellipse cx="100" cy="428" rx={fit.shadowRx} ry="7" fill="var(--color-neutral-300)" />
-        <circle cx="100" cy="38" r="22" fill="var(--color-neutral-200)" stroke="var(--color-neutral-500)" strokeWidth="1.5" />
-        <g transform={fit.bodyT}>
-          <rect x="92" y="58" width="16" height="20" fill="var(--color-neutral-200)" stroke="var(--color-neutral-500)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-          <path d="M62 84 C48 88 44 104 44 120 L38 240 L50 242 L60 130 Z M138 84 C152 88 156 104 156 120 L162 240 L150 242 L140 130 Z" fill="var(--color-neutral-200)" stroke="var(--color-neutral-500)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-          <path d="M64 205 L68 420 L94 420 L99 225 L101 225 L106 420 L132 420 L136 205 Z" fill="var(--color-neutral-200)" stroke="var(--color-neutral-500)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-          <path d="M60 82 Q100 70 140 82 L134 170 Q132 190 136 205 L64 205 Q68 190 66 170 Z" fill="var(--color-neutral-200)" stroke="var(--color-neutral-500)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-          <g transform={fit.garmentT} style={{ transition: "transform .3s" }}>
-            <path d={fit.garment.path} fill={fit.garment.fill} stroke="var(--color-text)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-            {view !== "back" && <path d={fit.garment.detail} fill="none" stroke={fit.garment.det} strokeWidth="1.5" vectorEffect="non-scaling-stroke" />}
-          </g>
+      <svg viewBox="0 0 200 440" aria-label={`Avatar wearing ${g?.name ?? "nothing"} in ${size}, ${view} view`}>
+        <ellipse cx="100" cy="428" rx={view === "side" ? Math.round(geo.shadowRx * 0.6) : geo.shadowRx} ry="7" fill="var(--color-neutral-300)" />
+        {/* Side view: the same silhouette narrowed, as the old avatar did. */}
+        <g transform={view === "side" ? "translate(100 0) scale(0.6 1) translate(-100 0)" : undefined}>
+          <path d={geo.legs} fill="var(--color-neutral-200)" {...stroke} />
+          <path d={geo.torso} fill="var(--color-neutral-200)" {...stroke} />
+          <path d={geo.arms} fill="var(--color-neutral-200)" {...stroke} />
+          <path d={geo.neck} fill="var(--color-neutral-200)" {...stroke} />
+          {geo.garment && (
+            <g>
+              <path d={geo.garment.path} fill={geo.garment.fill} stroke="var(--color-text)" strokeWidth="1.5" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+              {view !== "back" && <path d={geo.garment.detail} fill="none" stroke={geo.garment.det} strokeWidth="1.5" vectorEffect="non-scaling-stroke" />}
+            </g>
+          )}
         </g>
+        <circle cx={hd.cx} cy={hd.cy} r={hd.r} fill="var(--color-neutral-200)" {...stroke} />
       </svg>
-      {view === "front" && <div className="face"><ImageSlot id="fit-face" round /></div>}
+      {view === "front" && (
+        <div className="face" style={{ left: `${((hd.cx - hd.r) / 200) * 100}%`, top: `${((hd.cy - hd.r) / 440) * 100}%`, width: `${((hd.r * 2) / 200) * 100}%`, height: `${((hd.r * 2) / 440) * 100}%` }}>
+          <ImageSlot id="fit-face" round />
+        </div>
+      )}
     </div>
   );
+
+  // Product chart: four key garment measurements, widths doubled to circumferences.
+  const productCols = (g && isBottom(g) ? BOTTOM_MEASURES : TOP_MEASURES).filter((c) => c.k !== "hemW" && c.k !== "shoulder" && c.k !== "rise").slice(0, 4);
+  const cm = (v: number | undefined, flat: boolean) => (v === undefined ? "—" : String(flat ? v * 2 : v));
 
   return (
     <div className="fit-backdrop" onClick={(e) => e.target === e.currentTarget && closeFitRoom()}>
@@ -148,16 +158,14 @@ function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit" | "real"; prod
             <div className="fit-ctl">
               <section>
                 <span className="label">Your body</span>
-                <div className="body-sliders">
-                  <label className="slider">
-                    <span className="t"><span>Height</span><b>{h} cm</b></span>
-                    <input type="range" min={150} max={200} value={h} onChange={(e) => setBody({ h: +e.target.value })} />
-                  </label>
-                  <label className="slider">
-                    <span className="t"><span>Weight</span><b>{w} kg</b></span>
-                    <input type="range" min={45} max={130} value={w} onChange={(e) => setBody({ w: +e.target.value })} />
-                  </label>
-                </div>
+                <BodySliders profile={profile} onChange={resetPick} />
+                <details className="measures-d">
+                  <summary>
+                    <span>Your measurements</span>
+                    <span className="muted">{overrides ? `${overrides} of 6 yours, rest estimated` : "Estimated from height and weight"}</span>
+                  </summary>
+                  <BodyMeasures profile={profile} onChange={resetPick} />
+                </details>
                 <div className="face-row">
                   <div className="ph"><ImageSlot id="fit-face" round editable placeholder="face" /></div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -170,7 +178,7 @@ function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit" | "real"; prod
                 <span className="label">Garment</span>
                 <div className="garm cells boxed">
                   {garments.map((p, i) => (
-                    <button key={p.id} className={`pick ${i === gi ? "on" : ""}`} onClick={() => setGi(i)}>
+                    <button key={p.id} className={`pick ${i === gi ? "on" : ""}`} onClick={() => (setGi(i), resetPick())}>
                       <b><span className="only-d">{p.name}</span><span className="only-m">{SHORT[p.id] ?? p.name}</span></b>
                       <span className="pr">{money(p.price)}</span>
                     </button>
@@ -180,18 +188,19 @@ function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit" | "real"; prod
               <section>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase" }}>
                   <span className="muted">Size</span>
-                  <span style={{ color: "var(--color-accent-700)", fontWeight: 600 }}>We recommend {recLabel}</span>
+                  {rec && <span style={{ color: "var(--color-accent-700)", fontWeight: 600 }}>We recommend {rec}</span>}
                 </div>
-                <div className="fsizes cells boxed">
-                  {FIT_SIZES.map((l, i) => (
-                    <button key={l} className={`pick ${i === size ? "on" : i === fit.rec ? "rec" : ""}`} onClick={() => setSizePick(i)} aria-pressed={i === size}>
+                <div className="fsizes cells boxed" style={{ gridTemplateColumns: `repeat(${Math.max(1, g?.sizes.length ?? 1)}, 1fr)` }}>
+                  {(g?.sizes ?? []).map((l) => (
+                    <button key={l} className={`pick ${l === size ? "on" : l === rec ? "rec" : ""}`} onClick={() => setSizePick(l)} aria-pressed={l === size}>
                       <span>{l}</span>
-                      <small>{i === fit.rec ? "FOR YOU" : " "}</small>
+                      <small>{l === rec ? "FOR YOU" : " "}</small>
                     </button>
                   ))}
                 </div>
+                {advice && <p className="why">{advice.why}</p>}
                 <div className="zones-m">
-                  {fit.zones.map((z) => <div key={z.k}><span className="muted">{z.k}</span><b>{z.v}</b></div>)}
+                  {zones.map((z) => <div key={z.k}><span className="muted">{z.k}</span><b>{z.label} <span className="muted">{z.short}</span></b></div>)}
                 </div>
               </section>
             </div>
@@ -206,28 +215,31 @@ function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit" | "real"; prod
                 </div>
                 <span className="hint muted" style={{ fontSize: 12 }}>Drag to rotate · 360°</span>
               </div>
-              <div className={`verdict-m ${fit.verdictAccent ? "acc" : ""}`}>{fit.verdict}</div>
+              <div className={`verdict-m ${verdictAccent ? "acc" : ""}`}>{verdict}</div>
               {avatar}
-              <div className="cap"><b>{g?.name} · {sizeLabel}</b><span className="muted">on {h} cm / {w} kg</span></div>
+              <div className="cap"><b>{g?.name} · {size}</b><span className="muted">on {h} cm / {w} kg · chest {body.chest}</span></div>
             </div>
 
             <div className="fit-res">
-              <div className={`verdict ${fit.verdictAccent ? "acc" : ""}`}>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>Overall fit</span>
-                <b>{fit.verdict}</b>
+              <div className={`verdict ${verdictAccent ? "acc" : ""}`}>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>Overall fit · {size}</span>
+                <b>{verdict}</b>
               </div>
               <div className="zones">
-                {fit.zones.map((z) => (
+                {zones.map((z) => (
                   <div className="zone" key={z.k}>
-                    <div className="t"><span>{z.k}</span><b>{z.v}</b></div>
+                    <div className="t"><span>{z.k}</span><span><b>{z.label}</b> · {z.note}</span></div>
                     <div className="bar">{z.bar.map((c, i) => <span key={i} style={{ background: c }} />)}</div>
                   </div>
                 ))}
+                {!zones.length && <div className="zone muted" style={{ fontSize: 13 }}>{advice?.why ?? "Pick a garment."}</div>}
               </div>
-              <div className="scale-note muted" style={{ fontSize: 12, padding: "14px 24px" }}>Scale: tight ← → loose. The estimate uses your height and weight.</div>
+              <div className="scale-note muted" style={{ fontSize: 12, padding: "14px 24px" }}>
+                Scale: tight ← → loose, against the room this {g?.fitStyle ?? "regular"} cut is designed to have. Uses {overrides ? "your measurements" : "measurements estimated from your height and weight"} and this piece&rsquo;s garment specs.
+              </div>
               <div className="cta">
                 <button className="btn btn-primary row h56" onClick={add} disabled={!available} style={{ fontSize: 15 }}><span>{ctaLabel}</span><span>→</span></button>
-                <button className="btn btn-secondary row h44 use-rec" onClick={() => setSizePick(undefined)}><span>Use recommended ({recLabel})</span><span>↺</span></button>
+                {rec && <button className="btn btn-secondary row h44 use-rec" onClick={resetPick}><span>Use recommended ({rec})</span><span>↺</span></button>}
               </div>
             </div>
           </div>
@@ -246,9 +258,9 @@ function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit" | "real"; prod
                   <ellipse cx="100" cy="165" rx="36" ry="6" fill="none" stroke="var(--color-accent)" strokeWidth="3" />
                   <line x1="180" y1="16" x2="180" y2="420" stroke="var(--color-accent)" strokeWidth="3" />
                 </svg>
-                <span className="lbl" style={{ left: -100, top: 128 }}>Chest {row.chest}</span>
-                <span className="lbl" style={{ left: -100, top: 202 }}>Waist {row.waist}</span>
-                <span className="lbl" style={{ left: 200, top: 280 }}>{row.height}</span>
+                <span className="lbl" style={{ left: -100, top: 128 }}>Chest {row?.chest ?? body.chest}</span>
+                <span className="lbl" style={{ left: -100, top: 202 }}>Waist {row?.waist ?? body.waist}</span>
+                <span className="lbl" style={{ left: 200, top: 280 }}>{row?.height ?? h}</span>
               </div>
             </div>
             <div className="guide-r">
@@ -259,22 +271,34 @@ function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit" | "real"; prod
                 </div>
                 <span style={{ fontSize: 13 }}>Units: cm · EU</span>
               </div>
-              <div className="chart">
-                <div className="hd"><span>Size</span><span>EU</span><span>Chest</span><span>Waist</span><span>{product === "body" ? "Height" : "Length"}</span></div>
-                {SIZE_CHART.map((r, i) => {
-                  // Product chart: garment flat measurements. PLACEHOLDER — derived from
-                  // the body chart with standard ease until real garment specs exist.
-                  const ease = (range: string, add: number) => range.split("–").map((n) => +n + add).join("–");
-                  return (
-                    <button key={r.size} className={`pick ${i === size ? "sel" : ""}`} onClick={() => setSizePick(i)}>
-                      <span>{r.size}</span><span>{r.eu}</span>
-                      <span>{product === "body" ? r.chest : ease(r.chest, 12)}</span>
-                      <span>{product === "body" ? r.waist : ease(r.waist, 14)}</span>
-                      <span>{product === "body" ? r.height : String(70 + i * 2)}</span>
+              {product === "body" ? (
+                <div className="chart">
+                  <div className="hd"><span>Size</span><span>EU</span><span>Chest</span><span>Waist</span><span>Height</span></div>
+                  {SIZE_CHART.map((r) => (
+                    <button key={r.size} className={`pick ${r.size === size ? "sel" : ""}`} onClick={() => g?.sizes.includes(r.size) && setSizePick(r.size)}>
+                      <span>{r.size}</span><span>{r.eu}</span><span>{r.chest}</span><span>{r.waist}</span><span>{r.height}</span>
                     </button>
-                  );
-                })}
-              </div>
+                  ))}
+                </div>
+              ) : g?.measurements && Object.keys(g.measurements).length ? (
+                <>
+                  <div className="chart">
+                    <div className="hd"><span>Size</span>{productCols.map((c) => <span key={c.k}>{c.l.replace(/ (width|length)$/, "")}</span>)}</div>
+                    {g.sizes.map((z) => {
+                      const m = g.measurements?.[z] ?? {};
+                      return (
+                        <button key={z} className={`pick ${z === size ? "sel" : ""}`} onClick={() => setSizePick(z)}>
+                          <span>{z}</span>
+                          {productCols.map((c) => <span key={c.k}>{cm(m[c.k], c.k.endsWith("W"))}</span>)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <span className="muted" style={{ fontSize: 12 }}>{g.name}, measured flat. Chest, waist, hip and thigh widths are doubled to circumferences so you can compare them with your body.</span>
+                </>
+              ) : (
+                <p className="muted" style={{ margin: 0 }}>We don&rsquo;t have garment measurements for {g?.name ?? "this piece"} yet.</p>
+              )}
               <div className="model-note">
                 <div className="ph grayscale"><ImageSlot id="fit-model" round placeholder="model" editable={s.session.role === "admin"} /></div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>

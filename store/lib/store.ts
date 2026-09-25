@@ -13,14 +13,19 @@ import {
   SEED_SECTIONS,
   SEED_USERS,
   SEED_WEAR,
+  wearFitOf,
   type Hero,
+  type MeasureKey,
+  type Measurements,
   type Order,
   type Product,
   type Role,
   type Section,
   type User,
+  type WearFit,
   type WearSettings,
 } from "./data";
+import type { BodyProfile } from "./fit";
 
 export interface SiteContent {
   products: Product[];
@@ -67,7 +72,7 @@ export interface State {
   wishlist: string[];
   orders: Order[];
   users: User[];
-  fit: { h: number; w: number };
+  fit: BodyProfile;
   looks: SavedLook[];
   /** The customer agreed to send their photo to the try-on service. */
   tryonConsent: boolean;
@@ -101,6 +106,18 @@ const INITIAL: State = {
   ui: { bagOpen: false, menuOpen: false, fitRoom: { open: false, tab: "fit" }, toast: null },
 };
 
+/** Catalogues saved before garment measurements existed get the seed specs for seed products. */
+function withSpecs(c: SiteContent): SiteContent {
+  if (c.products.every((p) => p.measurements)) return c;
+  return {
+    ...c,
+    products: c.products.map((p) => {
+      const seed = SEED_PRODUCTS.find((x) => x.id === p.id);
+      return p.measurements || !seed?.measurements ? p : { ...p, fitStyle: p.fitStyle ?? seed.fitStyle, measurements: seed.measurements };
+    }),
+  };
+}
+
 function load(): State {
   if (typeof window === "undefined") return INITIAL;
   try {
@@ -108,7 +125,8 @@ function load(): State {
     if (!raw) return INITIAL;
     const saved = JSON.parse(raw);
     if (saved?.v !== 1) return INITIAL;
-    return { ...INITIAL, ...saved, ui: INITIAL.ui };
+    const next: State = { ...INITIAL, ...saved, ui: INITIAL.ui };
+    return { ...next, draft: withSpecs(next.draft), published: withSpecs(next.published) };
   } catch {
     return INITIAL;
   }
@@ -262,8 +280,13 @@ export function placeOrder(total: number): Order {
 
 // ── Fit profile ────────────────────────────────────────────────────────────
 
-export function setFit(patch: Partial<State["fit"]>) {
-  set((s) => ({ fit: { ...s.fit, ...patch } }));
+/** Update the body profile. Passing `undefined` for a measurement goes back to the estimate. */
+export function setFit(patch: Partial<BodyProfile>) {
+  set((s) => {
+    const fit: BodyProfile = { ...s.fit, ...patch };
+    for (const k of Object.keys(patch) as (keyof BodyProfile)[]) if (fit[k] === undefined) delete (fit as Partial<BodyProfile>)[k];
+    return { fit };
+  });
 }
 
 // ── Photo try-on ───────────────────────────────────────────────────────────
@@ -307,6 +330,19 @@ export function updateProduct(id: string, patch: Partial<Product>) {
   editDraft((d) => ({ products: d.products.map((p) => (p.id === id ? { ...p, ...patch } : p)) }));
 }
 
+/** Set one garment measurement for one size; an empty value clears it. */
+export function updateMeasurement(id: string, size: string, key: MeasureKey, value: number | undefined) {
+  editDraft((d) => ({
+    products: d.products.map((p) => {
+      if (p.id !== id) return p;
+      const row: Measurements = { ...p.measurements?.[size] };
+      if (value === undefined) delete row[key];
+      else row[key] = value;
+      return { ...p, measurements: { ...p.measurements, [size]: row } };
+    }),
+  }));
+}
+
 export function removeProduct(id: string) {
   editDraft((d) => ({
     products: d.products.filter((p) => p.id !== id),
@@ -318,7 +354,7 @@ export function addProduct(): string {
   const id = `p-${Date.now().toString(36)}`;
   const p: Product = {
     id, name: "New product", price: 0, category: "tops", colourways: ["Black"], sizes: ["S", "M", "L", "XL", "XXL"],
-    stock: {}, drop: "08", fabric: "", fit: "", shape: "tee", live: false,
+    stock: {}, drop: "08", fabric: "", fit: "", shape: "tee", fitStyle: "regular", measurements: {}, live: false,
     added: Math.max(0, ...state.draft.products.map((x) => x.added)) + 1,
   };
   editDraft((d) => ({ products: [p, ...d.products] }));
@@ -345,6 +381,21 @@ export function updateHero(patch: Partial<Hero>) {
 
 export function updateWear(patch: Partial<WearSettings>) {
   editDraft((d) => ({ wear: { ...d.wear, ...patch } }));
+}
+
+/** Adjust one garment's fit on the model photo; the others keep theirs. */
+export function updateWearFit(productId: string, patch: Partial<WearFit>) {
+  editDraft((d) => ({
+    wear: { ...d.wear, fits: { ...d.wear.fits, [productId]: { ...wearFitOf(d.wear, productId), ...patch } } },
+  }));
+}
+
+/** Copy one garment's fit to every garment in rotation. */
+export function applyWearFitToAll(productId: string) {
+  editDraft((d) => {
+    const fit = wearFitOf(d.wear, productId);
+    return { wear: { ...d.wear, ...fit, fits: Object.fromEntries(d.wear.garmentIds.map((id) => [id, fit])) } };
+  });
 }
 
 export function publish() {
