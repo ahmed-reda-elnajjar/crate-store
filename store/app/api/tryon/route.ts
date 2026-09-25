@@ -32,7 +32,7 @@ export async function GET(req: Request) {
   return NextResponse.json({ configured: !!p, provider: p?.name ?? null, remaining: remaining(clientOf(req)), dailyLimit: DAILY_LIMIT });
 }
 
-interface Item { garment: string; category: GarmentCategory; layer: number; description?: string }
+interface Item { garment: string; extra?: string[]; category: GarmentCategory; layer: number; description?: string }
 
 const isImageRef = (s: unknown): s is string =>
   typeof s === "string" && s.length < MAX_URL_BYTES && (/^data:image\/(png|jpe?g|webp);base64,/.test(s) || /^https:\/\//.test(s));
@@ -52,14 +52,17 @@ export async function POST(req: Request) {
   }
   const items = (Array.isArray(body.items) ? body.items : []) as Item[];
   if (!isImageRef(body.person)) return NextResponse.json({ error: "Add a photo of the person first." }, { status: 400 });
-  if (items.length < 1 || items.length > MAX_ITEMS || !items.every((i) => isImageRef(i.garment) && (i.category === "tops" || i.category === "bottoms")))
+  if (items.length < 1 || items.length > MAX_ITEMS || !items.every((i) => isImageRef(i.garment) && (i.category === "tops" || i.category === "bottoms") && (i.extra === undefined || (Array.isArray(i.extra) && i.extra.length <= 2 && i.extra.every(isImageRef)))))
     return NextResponse.json({ error: `Pick 1 to ${MAX_ITEMS} pieces with photos.` }, { status: 400 });
 
   count(client);
   try {
     let person = body.person;
-    for (const it of [...items].sort((a, b) => a.layer - b.layer)) {
-      person = await provider.run({ person, garment: it.garment, category: it.category, description: it.description });
+    const ordered = [...items].sort((a, b) => a.layer - b.layer);
+    if (provider.runAll) {
+      person = await provider.runAll(person, ordered.map((it) => ({ garment: it.garment, extra: it.extra, category: it.category, description: it.description })));
+    } else {
+      for (const it of ordered) person = await provider.run({ person, garment: it.garment, category: it.category, description: it.description });
     }
     // Return the image itself, so the browser can keep it without cross-origin fetches.
     let image = person;

@@ -55,6 +55,7 @@ Nothing here is a real server yet:
 Customers can see a photorealistic image of themselves (from a full-body photo) or of the CRATE model wearing 1–3 store pieces (one each of bottoms, tops and outerwear, applied in that order). They can save looks and compare up to three side by side. The 02 tab still decides the size; this tab shows the look and the colours.
 
 1. Copy `.env.example` to `.env.local` and set one provider:
+   - `TRYON_PROVIDER=meta` with `MODEL_API_KEY` ([Meta Model API, Muse Image](https://dev.meta.ai/docs/image-generation); one call per look, the person and all garment photos together), or
    - `TRYON_PROVIDER=fashn` with `FASHN_API_KEY` ([FASHN try-on v1.6](https://docs.fashn.ai/api-reference/tryon-v1-6)), or
    - `TRYON_PROVIDER=replicate` with `REPLICATE_API_TOKEN` (IDM-VTON), or
    - `TRYON_PROVIDER=mock` to test the UI without a key (the photo comes back unchanged).

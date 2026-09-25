@@ -82,6 +82,7 @@ const idle = (): Def => {
 };
 
 const DEFS: Record<string, () => Def> = { walk, idle };
+const ARM_KEYS = /^(shoulder|upperarm|lowerarm|hand|thumb_0\d|index_0\d|middle_0\d|ring_0\d|pinky_0\d)$/;
 
 /** Bones by key: "upperarm" gives both upperarm_l_024 and upperarm_r_049, "hip" gives hip_02. */
 function bonesOf(root: THREE.Object3D, key: string) {
@@ -105,7 +106,12 @@ export function motionClip(root: THREE.Object3D, name: string): THREE.AnimationC
   for (let t = 0; t <= def.duration + 1e-6; t += def.step) times.push(+t.toFixed(4));
   const tracks: THREE.KeyframeTrack[] = [];
   const v = new THREE.Vector3(), pq = new THREE.Quaternion(), pqi = new THREE.Quaternion(), q = new THREE.Quaternion(), D = new THREE.Quaternion(), E = new THREE.Euler(0, 0, 0, "ZYX");
-  for (const [key, fn] of Object.entries(def.bones)) {
+  // Figures that can't swing their arms freely (hands in pockets) ask for less arm motion in their file.
+  const armK = typeof root.userData.armMotion === "number" ? root.userData.armMotion : 1;
+  for (const [key, fn0] of Object.entries(def.bones)) {
+    const fn: Fn = ARM_KEYS.test(key) && armK !== 1
+      ? (t, s) => { const r = fn0(t, s); return { ...r, rx: (r.rx ?? 0) * armK, ry: (r.ry ?? 0) * armK, rz: (r.rz ?? 0) * armK }; }
+      : fn0;
     for (const bone of bonesOf(root, key)) {
       if (!bone.parent) continue;
       bone.getWorldPosition(v);

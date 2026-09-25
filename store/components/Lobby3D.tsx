@@ -278,7 +278,8 @@ export default function Lobby3D({ body, wear, look, faceUrl, avatarUrl, heat, fo
   const wearKey = JSON.stringify(wear.map((w) => [w.id, w.colour, w.m, w.zones, w.model]));
   const prevWear = useRef("");
   const lookKey = JSON.stringify(look);
-  const [note, setNote] = useState<string | null>(null);
+  // Notes about pieces without a 3D file are no longer shown over the avatar.
+  const [, setNote] = useState<string | null>(null);
   useEffect(() => {
     const st = three.current;
     if (!st) return;
@@ -376,7 +377,6 @@ export default function Lobby3D({ body, wear, look, faceUrl, avatarUrl, heat, fo
   return (
     <div className="lobby3d" ref={host} aria-label="3D avatar. Drag to turn, scroll to zoom.">
       {failed && <div className="lobby-fail">3D needs WebGL, which this browser has switched off.</div>}
-      {note && <div className="lobby-note">{note}</div>}
     </div>
   );
 }

@@ -117,6 +117,8 @@ function withSpecs(c: SiteContent): SiteContent {
       if (!q.measurements && seed.measurements) q = { ...q, fitStyle: q.fitStyle ?? seed.fitStyle, measurements: seed.measurements };
       // 3D files shipped with the site reach catalogues saved in the browser earlier.
       if (!q.model && seed.model) q = { ...q, model: seed.model, modelSize: q.modelSize ?? seed.modelSize };
+      // A 3D file the site used to ship (and has since removed or replaced) is dropped from saved catalogues too.
+      if (q.model?.startsWith("/models/") && q.model !== seed.model) q = { ...q, model: seed.model, modelSize: seed.model ? seed.modelSize : undefined };
       return q;
     }),
   };

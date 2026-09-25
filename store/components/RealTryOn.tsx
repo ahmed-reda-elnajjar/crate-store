@@ -7,11 +7,12 @@ import { recommend, resolveBody } from "@/lib/fit";
 import { money } from "@/lib/format";
 import { getImageBlob, putImage, removeImage, useImage } from "@/lib/images";
 import { clearLooks, closeFitRoom, removeLook, saveLook, setFitTab, setTryonConsent, siteFor, toast, useStore } from "@/lib/store";
+import { tryonModel, TRYON_MODELS, type ModelKey } from "@/lib/tryonModels";
 import { ImageSlot, productImg } from "./ImageSlot";
 
 const PERSON = "tryon-person";
-const STORE_MODEL = "/lookbook/model.jpg";
 const CACHE_INDEX = "crate-tryon-cache";
+const MAX_PHOTOS = 3; // photos of one piece sent to the try-on service
 
 type Layer = 0 | 1 | 2; // bottoms, tops, outerwear: worn in that order
 const layerOf = (p: Product): Layer => (p.category === "bottoms" ? 0 : p.category === "outerwear" ? 2 : 1);
@@ -63,15 +64,23 @@ export function RealTryOn({ productId }: { productId?: string }) {
   const role = s.session.role;
   const consent = s.tryonConsent;
   const personUrl = useImage(PERSON);
+  const [gender, setGender] = useState<ModelKey>("male");
+  const maleUpload = useImage(tryonModel("male").slot);
+  const femaleUpload = useImage(tryonModel("female").slot);
+  const model = tryonModel(gender);
+  // The CRATE model shown / dressed: the admin's upload for this group, else the built-in photo (male only).
+  const modelUrl = (gender === "male" ? maleUpload : femaleUpload) ?? model.src ?? null;
 
   const [status, setStatus] = useState<{ configured: boolean; provider: string | null; remaining: number } | null>(null);
   const [source, setSource] = useState<"me" | "model">("model");
-  const [uploaded, setUploaded] = useState<Set<string>>(new Set());
+  // Which photo slots (0..3) each product has an uploaded photo in; the built-in photo (public/products) is the fallback.
+  const [shots, setShots] = useState<Record<string, number[]>>({});
   const [picked, setPicked] = useState<Record<Layer, string | undefined>>(() => ({ 0: undefined, 1: undefined, 2: undefined }));
   const [result, setResult] = useState<string | null>(null);
   const [busy, setBusy] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [compare, setCompare] = useState<string[]>([]);
+  // Opening the tab shows the most recent saved look, so earlier results are waiting for the customer.
+  const [compare, setCompare] = useState<string[]>(() => (s.looks[0] ? [s.looks[0].id] : []));
 
   useEffect(() => {
     fetch("/api/tryon").then((r) => r.json()).then(setStatus).catch(() => setStatus({ configured: false, provider: null, remaining: 0 }));
@@ -80,23 +89,31 @@ export function RealTryOn({ productId }: { productId?: string }) {
     if (personUrl) setSource("me");
   }, [personUrl]);
 
-  // Pieces that can be tried on: clothing with a product photo (built-in or uploaded by an admin).
+  // Every clothing piece is listed; those without a photo yet are shown but can't be picked.
   useEffect(() => {
     let alive = true;
-    Promise.all(products.map(async (p) => ((await getImageBlob(productImg(p.id)).catch(() => undefined)) ? p.id : null))).then((ids) => {
-      if (alive) setUploaded(new Set(ids.filter((x): x is string => !!x)));
+    Promise.all(
+      products.map(async (p) => {
+        const have: number[] = [];
+        for (let i = 0; i < MAX_PHOTOS; i++) if (await getImageBlob(productImg(p.id, i)).catch(() => undefined)) have.push(i);
+        return [p.id, have] as const;
+      }),
+    ).then((rows) => {
+      if (alive) setShots(Object.fromEntries(rows));
     });
     return () => {
       alive = false;
     };
   }, [products]);
-  const pieces = useMemo(() => products.filter((p) => p.live && p.category !== "accessories" && (p.photo || uploaded.has(p.id))), [products, uploaded]);
+  const hasPhoto = (p: Product) => !!p.photo || (shots[p.id]?.length ?? 0) > 0;
+  const pieces = useMemo(() => products.filter((p) => p.live && p.category !== "accessories"), [products]);
 
   // Start with the piece the fit room was opened for.
   useEffect(() => {
     const p = pieces.find((x) => x.id === productId);
-    if (p) setPicked((m) => (m[layerOf(p)] ? m : { ...m, [layerOf(p)]: p.id }));
-  }, [pieces, productId]);
+    if (p && hasPhoto(p)) setPicked((m) => (m[layerOf(p)] ? m : { ...m, [layerOf(p)]: p.id }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pieces, productId, shots]);
 
   const chosen = ([0, 1, 2] as Layer[]).map((l) => pieces.find((p) => p.id === picked[l])).filter((p): p is Product => !!p);
   const body = resolveBody(s.fit);
@@ -104,12 +121,30 @@ export function RealTryOn({ productId }: { productId?: string }) {
   const lead = [...chosen].reverse().find((p) => sizeOf(p));
   const rec = lead ? sizeOf(lead) : undefined;
 
-  const garmentSrc = async (p: Product) => (await getImageBlob(productImg(p.id)).catch(() => undefined)) ?? p.photo!;
+  /** Every photo of the piece (up to MAX_PHOTOS): the uploaded ones, or the built-in photo. */
+  const garmentSrcs = async (p: Product): Promise<(Blob | string)[]> => {
+    const out: (Blob | string)[] = [];
+    for (const i of shots[p.id] ?? []) {
+      const b = await getImageBlob(productImg(p.id, i)).catch(() => undefined);
+      if (b) out.push(b);
+    }
+    return out.length ? out : p.photo ? [p.photo] : [];
+  };
+
+  /** Every generated image is kept on this device and listed under "Saved looks" (newest 12). */
+  const remember = async (blob: Blob, id: string) => {
+    if (s.looks.some((l) => l.id === id)) return;
+    await putImage(`look-${id}`, blob);
+    saveLook({ id, items: chosen.map((p) => p.id), at: Date.now() });
+    // The store keeps 12 looks; free the images of the ones that fall off the end.
+    s.looks.slice(11).forEach((l) => void removeImage(`look-${l.id}`).catch(() => undefined));
+  };
 
   const generate = async () => {
     setError(null);
     if (!consent) return setError("Tick the consent box first.");
     if (source === "me" && !personUrl) return setError("Add a full-body photo of yourself, or use the CRATE model.");
+    if (source === "model" && !modelUrl) return setError(`There is no ${model.label.toLowerCase()} model photo yet. Ask the store to add one.`);
     if (!chosen.length) return setError("Pick at least one piece.");
     setResult(null);
     setCompare([]);
@@ -117,21 +152,28 @@ export function RealTryOn({ productId }: { productId?: string }) {
     setBusy(0);
     const tick = setInterval(() => setBusy(Math.round((Date.now() - started) / 1000)), 1000);
     try {
-      const personBlob = source === "me" ? await getImageBlob(PERSON) : undefined;
-      const person = await toDataUrl(personBlob ?? STORE_MODEL);
-      const key = `tryon-cache-${await sha(person.slice(0, 20000) + person.length + "|" + chosen.map((p) => p.id).join(","))}`;
+      const personBlob = await getImageBlob(source === "me" ? PERSON : model.slot).catch(() => undefined);
+      const person = await toDataUrl(personBlob ?? (source === "me" ? PERSON : model.src!));
+      const key = `tryon-cache-${await sha(person.slice(0, 20000) + person.length + "|" + chosen.map((p) => `${p.id}:${(shots[p.id] ?? []).join(".")}`).join(","))}`;
+      const lookId = key.slice("tryon-cache-".length);
       const cached = await getImageBlob(key).catch(() => undefined);
       if (cached) {
+        await remember(cached, lookId);
         setResult(URL.createObjectURL(cached));
         return;
       }
       const items = await Promise.all(
-        chosen.map(async (p) => ({
-          garment: await toDataUrl(await garmentSrc(p)),
-          category: p.category === "bottoms" ? "bottoms" : "tops",
-          layer: layerOf(p),
-          description: `${p.name}, ${p.colourways[0]}`,
-        })),
+        chosen.map(async (p) => {
+          const srcs = await garmentSrcs(p);
+          return {
+            garment: await toDataUrl(srcs[0]),
+            // Extra photos of the same piece (back, detail) help the service copy it exactly.
+            extra: await Promise.all(srcs.slice(1).map((x) => toDataUrl(x, 800))),
+            category: p.category === "bottoms" ? "bottoms" : "tops",
+            layer: layerOf(p),
+            description: p.tryonNote?.trim() ? `${p.name}. Exact details: ${p.tryonNote.trim()}` : p.name,
+          };
+        }),
       );
       const res = await fetch("/api/tryon", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ person, items }) });
       const data = await res.json().catch(() => ({}));
@@ -140,6 +182,7 @@ export function RealTryOn({ productId }: { productId?: string }) {
       const blob = await (await fetch(data.image)).blob();
       await putImage(key, blob);
       writeIndex([...readIndex(), key]);
+      await remember(blob, lookId);
       setResult(URL.createObjectURL(blob));
     } catch (e) {
       setError(e instanceof Error ? e.message : "The try-on didn't work.");
@@ -149,12 +192,17 @@ export function RealTryOn({ productId }: { productId?: string }) {
     }
   };
 
-  const keep = async () => {
-    if (!result) return;
-    const id = Date.now().toString(36);
-    await putImage(`look-${id}`, await (await fetch(result)).blob());
-    saveLook({ id, items: chosen.map((p) => p.id), at: Date.now() });
-    toast("Look saved. Compare it with others on the right.");
+  /** Save the shown image to the device as a file. */
+  const download = async (url: string) => {
+    const blob = await (await fetch(url)).blob();
+    const ext = blob.type.includes("png") ? "png" : blob.type.includes("webp") ? "webp" : "jpg";
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `crate-look-${new Date().toISOString().slice(0, 10)}.${ext}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   };
 
   const deleteAll = async () => {
@@ -193,6 +241,13 @@ export function RealTryOn({ productId }: { productId?: string }) {
             <label className="seg-opt"><input type="radio" name="who" checked={source === "me"} onChange={() => setSource("me")} /><span>My photo</span></label>
             <label className="seg-opt"><input type="radio" name="who" checked={source === "model"} onChange={() => setSource("model")} /><span>CRATE model</span></label>
           </div>
+          {source === "model" && (
+            <div className="seg" style={{ alignSelf: "flex-start" }} role="radiogroup" aria-label="Model">
+              {TRYON_MODELS.map((m) => (
+                <label key={m.key} className="seg-opt"><input type="radio" name="model" checked={gender === m.key} onChange={() => { setGender(m.key); setResult(null); }} /><span>{m.label}</span></label>
+              ))}
+            </div>
+          )}
           <label className="radio" style={{ alignItems: "flex-start", fontSize: 13 }}>
             <input type="checkbox" checked={consent} onChange={(e) => setTryonConsent(e.target.checked)} />
             <span className="dot" style={{ marginTop: 2 }} />
@@ -225,11 +280,12 @@ export function RealTryOn({ productId }: { productId?: string }) {
                 <div className="real-pieces">
                   {list.map((p) => {
                     const on = picked[l] === p.id;
+                    const ok = hasPhoto(p);
                     return (
-                      <button key={p.id} className={`pick ${on ? "on" : ""}`} aria-pressed={on} onClick={() => setPicked((m) => ({ ...m, [l]: on ? undefined : p.id }))}>
+                      <button key={p.id} className={`pick ${on ? "on" : ""}`} aria-pressed={on} disabled={!ok} title={ok ? undefined : "No photo yet. Add one in Admin → Products."} style={ok ? undefined : { opacity: 0.55 }} onClick={() => setPicked((m) => ({ ...m, [l]: on ? undefined : p.id }))}>
                         <span className="ph"><ImageSlot id={productImg(p.id)} src={p.photo} alt="" /></span>
                         <span className="nm">{p.name}</span>
-                        <span className="pr">{money(p.price)}</span>
+                        <span className="pr">{ok ? money(p.price) : "No photo yet"}</span>
                       </button>
                     );
                   })}
@@ -237,7 +293,7 @@ export function RealTryOn({ productId }: { productId?: string }) {
               </div>
             );
           })}
-          {pieces.length === 0 && <span className="muted" style={{ fontSize: 13 }}>No pieces have photos yet. Admins can add them in Admin → Products.</span>}
+          {pieces.length > 0 && !pieces.some(hasPhoto) && <span className="muted" style={{ fontSize: 13 }}>No pieces have photos yet. Admins can add them in Admin → Products.</span>}
         </section>
       </div>
 
@@ -257,13 +313,16 @@ export function RealTryOn({ productId }: { productId?: string }) {
           <div className="real-placeholder">
             {busy !== null ? (
               <>
+                {status?.provider === "meta" && <MetaBadge />}
                 <b>Dressing {source === "me" ? "you" : "the model"}…</b>
                 <span>{busy}s · usually 10–40 seconds per piece</span>
               </>
             ) : source === "me" && personUrl ? (
               <img src={personUrl} alt="Your photo" className="real-img dim" />
+            ) : source === "model" && modelUrl ? (
+              <img src={modelUrl} alt={`CRATE model, ${model.label.toLowerCase()}`} className="real-img dim" />
             ) : source === "model" ? (
-              <img src={STORE_MODEL} alt="CRATE model" className="real-img dim" />
+              <span>No {model.label.toLowerCase()} model photo yet.</span>
             ) : (
               <span>Add your photo on the left</span>
             )}
@@ -289,7 +348,7 @@ export function RealTryOn({ productId }: { productId?: string }) {
           )) : <span className="muted" style={{ fontSize: 13 }}>Nothing picked yet.</span>}
           {s.looks.length > 0 && (
             <>
-              <span className="label" style={{ marginTop: 12 }}>Saved looks · pick up to 3 to compare</span>
+              <span className="label" style={{ marginTop: 12 }}>Your saved looks · pick up to 3 to compare</span>
               <div className="real-saved">
                 {s.looks.map((l) => {
                   const on = compare.includes(l.id);
@@ -311,12 +370,24 @@ export function RealTryOn({ productId }: { productId?: string }) {
           <button className="btn btn-primary row h56" disabled={busy !== null || !ready || !chosen.length} onClick={() => void generate()}>
             <span>{busy !== null ? "Generating…" : result ? "Generate again" : "Generate look"}</span><span>→</span>
           </button>
-          {result && <button className="btn btn-secondary row h44" onClick={() => void keep()}><span>Save this look</span><span>+</span></button>}
+          {result && <button className="btn btn-secondary row h44" onClick={() => void download(result)}><span>Download image</span><span>↓</span></button>}
           <button className="btn btn-ghost row h32" onClick={() => setFitTab("fit")}><span>Check the fit by zone</span><span>→</span></button>
+          {result && <span className="muted" style={{ fontSize: 12 }}>Saved to your looks on this device.</span>}
           {status && ready && <span className="muted" style={{ fontSize: 12 }}>{status.remaining} looks left today.</span>}
         </div>
       </div>
     </div>
+  );
+}
+
+/** The Meta AI logo (public/brand/meta-ai.png), spinning while the image is being made. */
+function MetaBadge() {
+  const [logo, setLogo] = useState(true);
+  return (
+    <span className="meta-badge" role="status" aria-label="Powered by Meta AI">
+      {logo ? <img className="spin" src="/brand/meta-ai.png" alt="" width={64} height={64} onError={() => setLogo(false)} /> : <span className="ring" aria-hidden />}
+      <span>Powered by Meta AI</span>
+    </span>
   );
 }
 

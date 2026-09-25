@@ -11,10 +11,19 @@ import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js
 import type { Measurements } from "./data";
 import type { Body } from "./fit";
 
-/** Avatar file that ships with the site, e.g. "/models/avatar.glb". Leave undefined for the built-in avatar. */
-export const AVATAR_FILE: string | undefined = "/models/avatar/avatar.glb";
+/**
+ * The avatars that ship with the site, one per fit-room model (Male / Female). Both are rigged on the same
+ * skeleton (the joint names lib/motions.ts drives) and bound in their own standing pose (asset.extras.pose = "baked").
+ */
+export type AvatarKind = "male" | "female";
+export const AVATARS: Record<AvatarKind, string> = {
+  male: "/models/avatar/male.glb?v=1",
+  female: "/models/avatar/female.glb?v=1",
+};
+/** The default avatar file (admin shows it as the shipped one). */
+export const AVATAR_FILE: string | undefined = AVATARS.male;
 
-export const AVATAR_SLOT = "model-avatar";
+export const AVATAR_SLOT = "model-avatar-v2";
 export const modelSlot = (productId: string) => `model-${productId}`;
 
 /** The body the avatar file is assumed to be modelled for (the fit room's default body). */
@@ -39,7 +48,7 @@ export function loadGLB(url: string): Promise<GLTF> {
  */
 export const POSE: { bone: RegExp; deg: number }[] = [
   { bone: /^shoulder_[lr]_\d+$/, deg: 8 },
-  { bone: /^upperarm_[lr]_\d+$/, deg: 66 },
+  { bone: /^upperarm_[lr]_\d+$/, deg: 62 },
   { bone: /^lowerarm_[lr]_\d+$/, deg: 6 },
   { bone: /^hand_[lr]_\d+$/, deg: 4 },
 ];
@@ -66,7 +75,11 @@ export function applyPose(root: THREE.Object3D, pose = POSE) {
 /** A fresh copy of the file's scene (skinned meshes keep their own skeleton). */
 function instance(g: GLTF): THREE.Object3D {
   const o = cloneSkinned(g.scene);
-  applyPose(o);
+  const extras = (g.asset?.extras ?? {}) as { pose?: string; armMotion?: number };
+  // Files rigged in their own standing pose are already posed; T-pose files get the A-pose above.
+  if (extras.pose !== "baked") applyPose(o);
+  // How much of the built-in arm motion this figure takes (e.g. hands in pockets), read by motionClip.
+  if (typeof extras.armMotion === "number") o.userData.armMotion = extras.armMotion;
   o.traverse((x) => {
     const m = x as THREE.Mesh;
     if (m.isMesh) {
@@ -138,7 +151,7 @@ export function fitGarment(g: GLTF, T: THREE.Matrix4, ratio: { w: number; l: num
       if (!m.isMesh) return;
       for (const q of Array.isArray(m.material) ? m.material : [m.material]) {
         const std = q as THREE.MeshStandardMaterial;
-        if (std.color && !std.map) std.color.set(colour);
+        if (std.color) std.color.set(colour); // multiplies a printed fabric's texture, so a print stays visible on light colourways
       }
     });
   }

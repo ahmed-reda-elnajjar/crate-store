@@ -614,6 +614,12 @@ button { font: inherit; color: inherit; }
 .real-img.dim { opacity: .55; }
 .real-placeholder { display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; font-size: 14px; color: var(--color-neutral-700); width: 100%; height: 100%; justify-content: center; }
 .real-placeholder b { font-size: 20px; color: var(--color-text); }
+.meta-badge { display: inline-flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 14px; font-size: 13px; font-weight: 600; color: var(--color-text); }
+.meta-badge img { display: block; width: 64px; height: 64px; object-fit: contain; }
+.meta-badge .spin { animation: meta-spin 2.4s linear infinite; }
+.meta-badge .ring { width: 40px; height: 40px; border-radius: 50%; border: 3px solid #e3d9ff; border-top-color: #7a4dff; animation: meta-spin 0.9s linear infinite; }
+@keyframes meta-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .meta-badge .spin, .meta-badge .ring { animation-duration: 8s; } }
 .real-note { position: absolute; left: 16px; right: 16px; bottom: 16px; background: var(--color-bg); border: 2px solid var(--color-divider); padding: 10px 12px; font-size: 13px; }
 .real-note.err { border-color: var(--color-accent); color: var(--color-accent-700); }
 .real-compare { display: grid; gap: 2px; background: var(--color-divider); width: 100%; height: 100%; }

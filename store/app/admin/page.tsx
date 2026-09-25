@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { ImageSlot, productImg } from "@/components/ImageSlot";
 import { ModelUpload } from "@/components/ModelUpload";
 import { AVATAR_FILE, AVATAR_SLOT, modelSlot } from "@/lib/models";
+import { TRYON_MODELS } from "@/lib/tryonModels";
 import { BOTTOM_MEASURES, CATEGORIES, FIT_STYLES, TOP_MEASURES, isBottom, type CategoryKey, type FitShape, type FitStyle, type Product } from "@/lib/data";
 import { longDate, money2 } from "@/lib/format";
 import {
@@ -128,12 +129,29 @@ function Products({ products }: { products: Product[] }) {
         </div>
         <ModelUpload slot={AVATAR_SLOT} label="Avatar" shipped={AVATAR_FILE} />
       </div>
+      <div className="avatar-file">
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <b style={{ fontSize: 14 }}>Try-on model photos</b>
+          <span className="muted" style={{ fontSize: 12 }}>One full-body photo per group for &ldquo;CRATE model&rdquo; in the photo try-on: standing, facing the camera, arms slightly away from the body, fitted clothes, plain background.</span>
+        </div>
+        <div style={{ display: "flex", gap: 16 }}>
+          {TRYON_MODELS.map((m) => (
+            <div key={m.key} style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "center" }}>
+              <div className="ph" style={{ position: "relative", width: 96, height: 128 }}><ImageSlot id={m.slot} src={m.src} placeholder={`drop ${m.label.toLowerCase()} photo`} editable fit="contain" alt={`${m.label} model`} /></div>
+              <span style={{ fontSize: 12, fontWeight: 600 }}>{m.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
       <div className="prow head"><span>Photo</span><span>Name</span><span>Price</span><span>Stock</span><span>Status</span><span /></div>
       {products.map((p) => (
         <div className="prow" key={p.id}>
           <div className="ph grayscale"><ImageSlot id={productImg(p.id)} src={p.photo} placeholder="drop photo" editable alt={p.name} /></div>
           <div className="nmcol">
             <input className="input" style={{ fontWeight: 600 }} aria-label="Name" value={p.name} onChange={(e) => updateProduct(p.id, { name: e.target.value })} />
+            {p.category !== "accessories" && (
+              <input className="input" style={{ fontSize: 12 }} aria-label="Try-on details" placeholder="Try-on details: round neck, no zip, short sleeves…" value={p.tryonNote ?? ""} onChange={(e) => updateProduct(p.id, { tryonNote: e.target.value })} />
+            )}
             <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
               <select aria-label="Category" value={p.category} onChange={(e) => updateProduct(p.id, { category: e.target.value as CategoryKey })}>
                 {CATEGORIES.map((c) => <option key={c.key} value={c.key}>{c.name}</option>)}

@@ -1,5 +1,12 @@
-Avatar: "Scanned rigged man Eric" by 1-3D.com (https://sketchfab.com/1-3D.com)
-Source: https://sketchfab.com/3d-models/scanned-rigged-man-eric-d9ee4f1001af42c0a071a390ba187287
-License: CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/)  -- credit is required if you keep this model.
+Fit-room avatars (public/models/avatar/), rigged here for the site's idle/walk motions:
 
-Garments (garments/*.glb) are generated from the avatar by tools/make-garments.mjs.
+male.glb   - "Casual Denim Layered Look" by restore50 (https://sketchfab.com/restore50)
+             https://sketchfab.com/3d-models/casual-denim-layered-look-f4a0825fb0e64d7998b7b669bf0dea79
+             License: CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/) -- credit required.
+
+female.glb - "Emerald Elegance" by Grauwolf (https://sketchfab.com/Grauwolf)
+             https://sketchfab.com/3d-models/emerald-elegance-a84381d83255419f8f7593d6be0502dc
+             License: CC-BY-NC 4.0 (https://creativecommons.org/licenses/by-nc/4.0/) -- credit required,
+             NON-COMMERCIAL use only: replace it, or get the author's permission, before a live shop uses it.
+
+Skeleton layout (bone names/hierarchy) from "Scanned rigged man Eric" by 1-3D.com, CC-BY 4.0.
