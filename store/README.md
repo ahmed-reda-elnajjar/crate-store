@@ -4,9 +4,11 @@ The Crate storefront built from the Claude Design handoff (`../project/Crate Sto
 Next.js 16 (App Router) + React 19 + TypeScript, styled with the Modernist design system (`app/modernist.css`, copied verbatim) plus `app/crate.css`.
 
 ```bash
+ D:\claudeAI\cart\crate-store> cd store
 npm install
 npm run dev        # http://localhost:3000
 npm run build && npm start
+npm test           # fit engine unit tests (Node's built-in runner, no extra packages)
 ```
 
 ## Demo accounts
@@ -31,7 +33,7 @@ Guests can browse. Adding to the bag or checking out sends them to sign in.
 | 2i Checkout | `/checkout` |
 | 2k Account (+ 2l member strip) | `/account` |
 | 2m Search | `/search?q=` |
-| 3a / 3b Size guide + fit room | `components/FitRoom.tsx`, logic in `lib/fit.ts` |
+| 3a / 3b Size guide + fit room | `components/FitRoom.tsx`; fit engine in `lib/fit.ts` (tests in `lib/fit.test.ts`), avatar in `lib/avatar.ts`, body profile fields in `components/BodyProfile.tsx` |
 | 4a Sign in | `/signin` |
 | 4b Admin | `/admin` |
 | 5a / 5b Wear carousel | `/lookbook` and a home section (`components/WearCarousel.tsx`) |

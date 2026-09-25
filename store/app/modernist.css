@@ -70,7 +70,8 @@ body {
 }
 h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); }
 
-.grayscale{filter:grayscale(1) contrast(1.08)}
+/* Product photos show in full colour; .grayscale kept as a no-op hook. */
+.grayscale{}
 
 /* ══════════════════════════════════════════════════════════════════════════
    Components — built with the tokens above. Plain CSS
