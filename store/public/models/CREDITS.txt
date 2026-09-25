@@ -1,0 +1,5 @@
+Avatar: "Scanned rigged man Eric" by 1-3D.com (https://sketchfab.com/1-3D.com)
+Source: https://sketchfab.com/3d-models/scanned-rigged-man-eric-d9ee4f1001af42c0a071a390ba187287
+License: CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/)  -- credit is required if you keep this model.
+
+Garments (garments/*.glb) are generated from the avatar by tools/make-garments.mjs.

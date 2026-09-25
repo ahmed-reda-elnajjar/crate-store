@@ -12,7 +12,7 @@ import type { Measurements } from "./data";
 import type { Body } from "./fit";
 
 /** Avatar file that ships with the site, e.g. "/models/avatar.glb". Leave undefined for the built-in avatar. */
-export const AVATAR_FILE: string | undefined = undefined;
+export const AVATAR_FILE: string | undefined = "/models/avatar/avatar.glb";
 
 export const AVATAR_SLOT = "model-avatar";
 export const modelSlot = (productId: string) => `model-${productId}`;
@@ -31,9 +31,42 @@ export function loadGLB(url: string): Promise<GLTF> {
   return p;
 }
 
+/**
+ * The pose the avatar stands in: swing each named bone about the world Z axis (the
+ * axis the character faces along), in degrees, away from the T-pose the file is
+ * modelled in. Garments made on the avatar share its skeleton, so they get the same pose.
+ * Left/right pairs mirror automatically. Set POSE to {} to keep the file's own pose.
+ */
+export const POSE: { bone: RegExp; deg: number }[] = [
+  { bone: /^shoulder_[lr]_\d+$/, deg: 8 },
+  { bone: /^upperarm_[lr]_\d+$/, deg: 66 },
+  { bone: /^lowerarm_[lr]_\d+$/, deg: 6 },
+  { bone: /^hand_[lr]_\d+$/, deg: 4 },
+];
+
+export function applyPose(root: THREE.Object3D, pose = POSE) {
+  root.updateMatrixWorld(true);
+  const bones: THREE.Bone[] = [];
+  root.traverse((x) => { if ((x as THREE.Bone).isBone) bones.push(x as THREE.Bone); });
+  const axis = new THREE.Vector3(0, 0, 1), q = new THREE.Quaternion(), pq = new THREE.Quaternion(), wq = new THREE.Quaternion(), v = new THREE.Vector3();
+  for (const rule of pose) {
+    for (const b of bones) {
+      if (!rule.bone.test(b.name) || !b.parent) continue;
+      b.getWorldPosition(v);
+      const side = v.x >= 0 ? -1 : 1; // swing the arm on the +x side down, the other side mirrored
+      b.getWorldQuaternion(wq);
+      b.parent.getWorldQuaternion(pq);
+      q.setFromAxisAngle(axis, (side * rule.deg * Math.PI) / 180).multiply(wq);
+      b.quaternion.copy(pq.invert().multiply(q));
+      b.updateMatrixWorld(true);
+    }
+  }
+}
+
 /** A fresh copy of the file's scene (skinned meshes keep their own skeleton). */
 function instance(g: GLTF): THREE.Object3D {
   const o = cloneSkinned(g.scene);
+  applyPose(o);
   o.traverse((x) => {
     const m = x as THREE.Mesh;
     if (m.isMesh) {
@@ -49,6 +82,8 @@ function instance(g: GLTF): THREE.Object3D {
 
 export interface Fitted {
   root: THREE.Group;
+  /** The skinned scene inside `root`, so a motion can be played on it. */
+  obj: THREE.Object3D;
   clips: { target: THREE.Object3D; clip: THREE.AnimationClip }[];
 }
 
@@ -87,7 +122,7 @@ export function fitAvatar(g: GLTF, T: THREE.Matrix4): Fitted {
   const obj = instance(g);
   const root = new THREE.Group();
   root.add(wrap(obj, T));
-  return { root, clips: g.animations.length ? [{ target: obj, clip: g.animations[0] }] : [] };
+  return { root, obj, clips: [] };
 }
 
 /**
@@ -119,7 +154,7 @@ export function fitGarment(g: GLTF, T: THREE.Matrix4, ratio: { w: number; l: num
   sizer.add(placed);
   const root = new THREE.Group();
   root.add(sizer);
-  return { root, clips: g.animations.length ? [{ target: obj, clip: g.animations[0] }] : [] };
+  return { root, obj, clips: [] };
 }
 
 /** One garment file on its own, framed for a wardrobe card (no avatar needed). */
