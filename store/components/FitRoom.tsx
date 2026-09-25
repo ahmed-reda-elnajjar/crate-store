@@ -166,6 +166,8 @@ function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit" | "real"; prod
   const [colours, setColours] = useState<Record<string, string>>({});
   const [heat, setHeat] = useState(false);
   const [cam, setCam] = useState<Focus>("full");
+  const [motion, setMotion] = useState("idle");
+  const [motions, setMotions] = useState<string[]>([]);
   const [turn, setTurn] = useState({ yaw: 0, n: 0 });
   const [dragging, setDragging] = useState(false);
   const [look, setLook] = useLook();
@@ -319,7 +321,7 @@ function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit" | "real"; prod
         ) : tab === "fit" ? (
           <div className="fit-body lobby-body">
             <div className={`stage lobby ${dragging ? "dragging" : ""}`}>
-              <Lobby3D body={body} wear={wear} look={look} faceUrl={faceUrl} avatarUrl={avatarUrl} heat={heat} focus={cam} turn={turn} onDragChange={setDragging} />
+              <Lobby3D body={body} wear={wear} look={look} faceUrl={faceUrl} avatarUrl={avatarUrl} heat={heat} focus={cam} turn={turn} motion={motion} onMotions={setMotions} onDragChange={setDragging} />
               <div className="top">
                 <div className="views">
                   {VIEWS.map(([l, yaw]) => (
@@ -329,6 +331,9 @@ function FitRoomDialog({ tab, productId }: { tab: "guide" | "fit" | "real"; prod
                 <div className="views">
                   <button className={`pick ${cam === "full" ? "on" : ""}`} onClick={() => setCam("full")}>Full look</button>
                   <button className={`pick ${heat ? "on" : ""}`} onClick={() => setHeat(!heat)} aria-pressed={heat}>Fit heat</button>
+                  {avatarUrl && motions.map((m) => (
+                    <button key={m} className={`pick ${motion === m ? "on" : ""}`} onClick={() => setMotion(m)} aria-pressed={motion === m}>{m[0].toUpperCase() + m.slice(1)}</button>
+                  ))}
                 </div>
               </div>
               {heat && (

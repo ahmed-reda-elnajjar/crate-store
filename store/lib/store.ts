@@ -108,12 +108,16 @@ const INITIAL: State = {
 
 /** Catalogues saved before garment measurements existed get the seed specs for seed products. */
 function withSpecs(c: SiteContent): SiteContent {
-  if (c.products.every((p) => p.measurements)) return c;
   return {
     ...c,
     products: c.products.map((p) => {
       const seed = SEED_PRODUCTS.find((x) => x.id === p.id);
-      return p.measurements || !seed?.measurements ? p : { ...p, fitStyle: p.fitStyle ?? seed.fitStyle, measurements: seed.measurements };
+      if (!seed) return p;
+      let q = p;
+      if (!q.measurements && seed.measurements) q = { ...q, fitStyle: q.fitStyle ?? seed.fitStyle, measurements: seed.measurements };
+      // 3D files shipped with the site reach catalogues saved in the browser earlier.
+      if (!q.model && seed.model) q = { ...q, model: seed.model, modelSize: q.modelSize ?? seed.modelSize };
+      return q;
     }),
   };
 }
