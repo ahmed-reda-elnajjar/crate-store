@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Product, WearFit, WearSettings } from "@/lib/data";
 import { cutoutGarment } from "@/lib/cutout";
 import { money } from "@/lib/format";
-import { getImageBlob, putImage } from "@/lib/images";
+import { getImageBlob, putImage, useImage } from "@/lib/images";
 import { toast, updateProduct, updateWear } from "@/lib/store";
 import { ImageSlot } from "./ImageSlot";
 
@@ -227,7 +227,8 @@ export function WearCarousel({ wear, products, editable, standalone }: { wear: W
     const sh = (f.hPct ?? 100) / 100;
     const stretched = sw !== 1 || sh !== 1;
     const w = w0 * sw;
-    const h = (wear.aligned ? (mh * f.scalePct) / 100 : w0 * (stretched ? aspects[p.id] ?? 1.1 : Math.min(2, aspects[p.id] ?? 1.1))) * sh;
+    // Flat shots are cropped to the garment itself, so the box hugs it and stretching acts on the garment.
+    const h = (wear.aligned ? (mh * f.scalePct) / 100 : w0 * (aspects[p.id] ?? 1.1)) * sh;
     const cx = (f.xPct / 100) * mw;
     const editing = editable && pos === 0;
     return (
@@ -256,15 +257,18 @@ export function WearCarousel({ wear, products, editable, standalone }: { wear: W
           ...(wear.aligned ? {} : neckMask(f.neck, w)),
         }}
       >
-        <ImageSlot
-          id={wearImg(p.id)}
-          src={wear.images?.[p.id]}
-          fit={stretched && !(wear.aligned && modelFit === "cover") ? "fill" : wear.aligned ? modelFit : "contain"}
-          anchorTop={wear.aligned ? modelFit === "cover" : true}
-          placeholder={editable ? `garment photo ${i + 1}` : ""}
-          alt={p.name}
-          onAspect={(a) => setAspects((m) => (m[p.id] === a ? m : { ...m, [p.id]: a }))}
-        />
+        {wear.aligned ? (
+          <ImageSlot
+            id={wearImg(p.id)}
+            src={wear.images?.[p.id]}
+            fit={stretched && modelFit !== "cover" ? "fill" : modelFit}
+            anchorTop={modelFit === "cover"}
+            placeholder={editable ? `garment photo ${i + 1}` : ""}
+            alt={p.name}
+          />
+        ) : (
+          <GarmentImg id={wearImg(p.id)} src={wear.images?.[p.id]} alt={p.name} placeholder={editable ? `garment photo ${i + 1}` : ""} onAspect={(a) => setAspects((m) => (m[p.id] === a ? m : { ...m, [p.id]: a }))} />
+        )}
         {editing && ([["resize", "wear-handle"], ["w", "wear-handle e"], ["h", "wear-handle s"]] as const).map(([mode, cls]) => (
           <span
             key={mode}
@@ -513,6 +517,89 @@ function PctBox({ value, min, max, label, onCommit }: { value: number; min: numb
         onKeyDown={(e) => e.key === "Enter" && (e.currentTarget as HTMLInputElement).blur()}
       />
       %
+    </span>
+  );
+}
+
+/** Where the garment actually is in a photo: the box round its non-transparent pixels, as fractions. */
+type Bounds = { x: number; y: number; w: number; h: number; ratio: number };
+const boundsCache = new Map<string, Bounds>();
+
+function measure(img: HTMLImageElement): Bounds {
+  const S = 400;
+  const k = Math.min(1, S / Math.max(img.naturalWidth, img.naturalHeight));
+  const W = Math.max(1, Math.round(img.naturalWidth * k));
+  const H = Math.max(1, Math.round(img.naturalHeight * k));
+  const full = { x: 0, y: 0, w: 1, h: 1, ratio: img.naturalHeight / img.naturalWidth };
+  const cv = document.createElement("canvas");
+  cv.width = W;
+  cv.height = H;
+  const ctx = cv.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return full;
+  ctx.drawImage(img, 0, 0, W, H);
+  let data: Uint8ClampedArray;
+  try {
+    data = ctx.getImageData(0, 0, W, H).data;
+  } catch {
+    return full;
+  }
+  let [x0, y0, x1, y1] = [W, H, -1, -1];
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++)
+      if (data[(y * W + x) * 4 + 3] > 16) {
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+      }
+  if (x1 < 0) return full;
+  const b = { x: x0 / W, y: y0 / H, w: (x1 - x0 + 1) / W, h: (y1 - y0 + 1) / H };
+  return { ...b, ratio: (b.h * img.naturalHeight) / (b.w * img.naturalWidth) };
+}
+
+/**
+ * A flat garment shot cropped to the garment: transparent margins are cut away so the
+ * layer's box (and its handles) sit on the garment's edges, and the photo stretches to
+ * whatever width and height the box is given.
+ */
+function GarmentImg({ id, src, alt, placeholder, onAspect }: { id: string; src?: string; alt: string; placeholder: string; onAspect: (ratio: number) => void }) {
+  const uploaded = useImage(id);
+  const url = uploaded ?? src ?? null;
+  const [b, setB] = useState<Bounds | null>(() => (url ? boundsCache.get(url) ?? null : null));
+  const report = useRef(onAspect);
+  report.current = onAspect;
+  useEffect(() => {
+    if (!url) return;
+    const hit = boundsCache.get(url);
+    if (hit) {
+      setB(hit);
+      report.current(hit.ratio);
+      return;
+    }
+    let alive = true;
+    const img = new Image();
+    img.onload = () => {
+      const m = measure(img);
+      boundsCache.set(url, m);
+      if (!alive) return;
+      setB(m);
+      report.current(m.ratio);
+    };
+    img.src = url;
+    return () => {
+      alive = false;
+    };
+  }, [url]);
+  if (!url) return placeholder ? <span className="slot"><span className="slot-empty">{placeholder}</span></span> : null;
+  if (!b) return null;
+  return (
+    <span className="slot" style={{ overflow: "hidden" }}>
+      <img
+        src={url}
+        alt={alt}
+        draggable={false}
+        style={{ position: "absolute", maxWidth: "none", width: `${100 / b.w}%`, height: `${100 / b.h}%`, left: `${(-b.x / b.w) * 100}%`, top: `${(-b.y / b.h) * 100}%`, objectFit: "fill" }}
+      />
     </span>
   );
 }
