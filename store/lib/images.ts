@@ -6,6 +6,31 @@
 // "wear-model"). Swap this module for uploads to object storage later.
 
 import { useEffect, useState } from "react";
+import SNAPSHOT from "./snapshot.json";
+
+// Photos the owner copied into the site with /snapshot (public/snapshot/*): every
+// browser shows them until it uploads its own for that slot or removes it.
+const SHIPPED: Record<string, string> = (SNAPSHOT as { images?: Record<string, string> }).images ?? {};
+const REMOVED = "crate-images-removed";
+function removed(): Set<string> {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(REMOVED) ?? "[]") as string[]);
+  } catch {
+    return new Set();
+  }
+}
+function markRemoved(id: string, on: boolean) {
+  if (!SHIPPED[id]) return;
+  const set = removed();
+  if (on) set.add(id);
+  else set.delete(id);
+  try {
+    localStorage.setItem(REMOVED, JSON.stringify([...set]));
+  } catch {
+    // storage blocked
+  }
+}
+const shipped = (id: string) => (SHIPPED[id] && !removed().has(id) ? SHIPPED[id] : null);
 
 const DB = "crate-images";
 const STORE = "slots";
@@ -45,8 +70,8 @@ function emit(id: string) {
 async function refresh(id: string) {
   const blob = await tx<Blob | undefined>("readonly", (s) => s.get(id)).catch(() => undefined);
   const old = urls.get(id);
-  if (old) URL.revokeObjectURL(old);
-  urls.set(id, blob ? URL.createObjectURL(blob) : null);
+  if (old?.startsWith("blob:")) URL.revokeObjectURL(old);
+  urls.set(id, blob ? URL.createObjectURL(blob) : shipped(id));
   emit(id);
 }
 
@@ -56,16 +81,23 @@ channel?.addEventListener("message", (e) => {
 
 export async function putImage(id: string, file: Blob) {
   await tx("readwrite", (s) => s.put(file, id));
+  markRemoved(id, false);
   await refresh(id);
   channel?.postMessage(id);
 }
 
-export function getImageBlob(id: string): Promise<Blob | undefined> {
-  return tx<Blob | undefined>("readonly", (s) => s.get(id));
+export async function getImageBlob(id: string): Promise<Blob | undefined> {
+  const own = await tx<Blob | undefined>("readonly", (s) => s.get(id)).catch(() => undefined);
+  if (own) return own;
+  const url = shipped(id);
+  if (!url) return undefined;
+  const r = await fetch(url);
+  return r.ok ? r.blob() : undefined;
 }
 
 export async function removeImage(id: string) {
   await tx("readwrite", (s) => s.delete(id));
+  markRemoved(id, true);
   await refresh(id);
   channel?.postMessage(id);
 }

@@ -6,6 +6,7 @@
 // reimplementing those actions, not touching the pages.
 
 import { useSyncExternalStore } from "react";
+import SNAPSHOT from "./snapshot.json";
 import {
   SEED_HERO,
   SEED_ORDERS,
@@ -65,6 +66,8 @@ export interface SavedLook {
 
 export interface State {
   v: 1;
+  /** Which shipped store (lib/snapshot.json) this browser's copy started from. */
+  snap?: string | null;
   session: Session;
   draft: SiteContent;
   published: SiteContent;
@@ -82,7 +85,10 @@ export interface State {
 // v2: the lookbook ships with built-in, pre-fitted photos; older saved drafts predate them.
 const STORAGE_KEY = "crate-store:v2";
 
-const SEED_CONTENT: SiteContent = {
+/** The store as the owner set it up (copied in with /snapshot), shipped to every visitor. */
+const SHIPPED = SNAPSHOT as unknown as { version: string | null; content: SiteContent | null };
+
+const SEED_CONTENT: SiteContent = SHIPPED.content ?? {
   products: SEED_PRODUCTS,
   sections: SEED_SECTIONS,
   hero: SEED_HERO,
@@ -93,6 +99,7 @@ const GUEST: Session = { role: "guest", email: "", name: "" };
 
 const INITIAL: State = {
   v: 1,
+  snap: SHIPPED.version,
   session: GUEST,
   draft: SEED_CONTENT,
   published: SEED_CONTENT,
@@ -132,6 +139,12 @@ function load(): State {
     const saved = JSON.parse(raw);
     if (saved?.v !== 1) return INITIAL;
     const next: State = { ...INITIAL, ...saved, ui: INITIAL.ui };
+    // A newer shipped store replaces the catalogue and pages saved in this browser (bag, account and orders stay).
+    if (SHIPPED.version && saved.snap !== SHIPPED.version) {
+      next.draft = SEED_CONTENT;
+      next.published = SEED_CONTENT;
+      next.snap = SHIPPED.version;
+    }
     return { ...next, draft: withSpecs(next.draft), published: withSpecs(next.published) };
   } catch {
     return INITIAL;

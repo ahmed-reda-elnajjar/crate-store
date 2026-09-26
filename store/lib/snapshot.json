@@ -1,0 +1,798 @@
+{
+ "version": "2026-09-26T02:20:40.822Z",
+ "exportedAt": "2026-09-26T02:20:40.822Z",
+ "content": {
+  "products": [
+   {
+    "id": "boxy-heavy-tee",
+    "name": "Boxy Heavy Tee",
+    "price": 48,
+    "category": "tops",
+    "colourways": [
+     "Bone",
+     "Black",
+     "Ash",
+     "Olive"
+    ],
+    "sizes": [
+     "S",
+     "M",
+     "L",
+     "XL",
+     "XXL"
+    ],
+    "stock": {
+     "S": 30,
+     "M": 40,
+     "L": 30,
+     "XL": 14,
+     "XXL": 6
+    },
+    "tag": "New",
+    "drop": "07",
+    "fabric": "240gsm organic cotton jersey",
+    "fit": "Boxy, cropped body",
+    "shape": "tee",
+    "live": true,
+    "added": 10,
+    "fitStyle": "oversized",
+    "measurements": {
+     "S": {
+      "chestW": 57.5,
+      "waistW": 56.5,
+      "hemW": 56.5,
+      "length": 69.5,
+      "sleeve": 22,
+      "shoulder": 53.5
+     },
+     "M": {
+      "chestW": 60,
+      "waistW": 59,
+      "hemW": 59,
+      "length": 71,
+      "sleeve": 23,
+      "shoulder": 55
+     },
+     "L": {
+      "chestW": 62.5,
+      "waistW": 61.5,
+      "hemW": 61.5,
+      "length": 72.5,
+      "sleeve": 24,
+      "shoulder": 56.5
+     },
+     "XL": {
+      "chestW": 65,
+      "waistW": 64,
+      "hemW": 64,
+      "length": 74,
+      "sleeve": 24.5,
+      "shoulder": 58
+     },
+     "XXL": {
+      "chestW": 67.5,
+      "waistW": 66.5,
+      "hemW": 66.5,
+      "length": 75.5,
+      "sleeve": 25.5,
+      "shoulder": 59.5
+     }
+    }
+   },
+   {
+    "id": "double-knee-carpenter",
+    "name": "Double-Knee Carpenter",
+    "price": 128,
+    "category": "bottoms",
+    "colourways": [
+     "Black",
+     "Tan",
+     "Grey"
+    ],
+    "sizes": [
+     "28",
+     "30",
+     "32",
+     "34",
+     "36"
+    ],
+    "stock": {
+     "28": 8,
+     "30": 16,
+     "32": 20,
+     "34": 14,
+     "36": 6
+    },
+    "drop": "07",
+    "fabric": "12oz cotton canvas",
+    "fit": "Relaxed, straight leg",
+    "shape": "pants",
+    "live": true,
+    "added": 9,
+    "fitStyle": "regular",
+    "measurements": {
+     "28": {
+      "waistW": 37.5,
+      "hipW": 48.5,
+      "thighW": 30.5,
+      "inseam": 81,
+      "rise": 28
+     },
+     "30": {
+      "waistW": 40,
+      "hipW": 51,
+      "thighW": 32,
+      "inseam": 81,
+      "rise": 28.5
+     },
+     "32": {
+      "waistW": 42.5,
+      "hipW": 53.5,
+      "thighW": 33,
+      "inseam": 81,
+      "rise": 29
+     },
+     "34": {
+      "waistW": 45,
+      "hipW": 56,
+      "thighW": 34,
+      "inseam": 81,
+      "rise": 29.5
+     },
+     "36": {
+      "waistW": 47.5,
+      "hipW": 58.5,
+      "thighW": 35.5,
+      "inseam": 81,
+      "rise": 30
+     }
+    }
+   },
+   {
+    "id": "nylon-track-jacket",
+    "name": "Nylon Track Jacket",
+    "price": 165,
+    "category": "outerwear",
+    "colourways": [
+     "Black",
+     "Stone"
+    ],
+    "sizes": [
+     "S",
+     "M",
+     "L",
+     "XL",
+     "XXL"
+    ],
+    "stock": {
+     "S": 3,
+     "M": 4,
+     "L": 2
+    },
+    "run": 250,
+    "tag": "Low stock",
+    "drop": "07",
+    "fabric": "100% recycled nylon, mesh lining",
+    "fit": "Oversized, dropped shoulder",
+    "shape": "jacket",
+    "photo": "/products/red.jpg",
+    "live": true,
+    "added": 8,
+    "fitStyle": "oversized",
+    "measurements": {
+     "S": {
+      "chestW": 58,
+      "waistW": 57,
+      "hemW": 54.5,
+      "length": 70.5,
+      "sleeve": 59,
+      "shoulder": 52.5
+     },
+     "M": {
+      "chestW": 60.5,
+      "waistW": 59.5,
+      "hemW": 57,
+      "length": 72,
+      "sleeve": 60,
+      "shoulder": 54
+     },
+     "L": {
+      "chestW": 63,
+      "waistW": 62,
+      "hemW": 59.5,
+      "length": 73.5,
+      "sleeve": 61,
+      "shoulder": 55.5
+     },
+     "XL": {
+      "chestW": 65.5,
+      "waistW": 64.5,
+      "hemW": 62,
+      "length": 75,
+      "sleeve": 62,
+      "shoulder": 57
+     },
+     "XXL": {
+      "chestW": 68,
+      "waistW": 67,
+      "hemW": 64.5,
+      "length": 76.5,
+      "sleeve": 63,
+      "shoulder": 58.5
+     }
+    }
+   },
+   {
+    "id": "480gsm-hoodie",
+    "name": "480gsm Hoodie",
+    "price": 120,
+    "category": "tops",
+    "colourways": [
+     "Black",
+     "Grey",
+     "Navy",
+     "Bone",
+     "Red"
+    ],
+    "sizes": [
+     "S",
+     "M",
+     "L",
+     "XL",
+     "XXL"
+    ],
+    "stock": {
+     "S": 10,
+     "M": 14,
+     "L": 12,
+     "XL": 8,
+     "XXL": 4
+    },
+    "drop": "07",
+    "fabric": "480gsm brushed-back fleece",
+    "fit": "Boxy, dropped shoulder",
+    "shape": "hoodie",
+    "live": true,
+    "added": 7,
+    "fitStyle": "oversized",
+    "measurements": {
+     "S": {
+      "chestW": 57.5,
+      "waistW": 56.5,
+      "hemW": 54,
+      "length": 69.5,
+      "sleeve": 60,
+      "shoulder": 52.5
+     },
+     "M": {
+      "chestW": 60,
+      "waistW": 59,
+      "hemW": 56.5,
+      "length": 71,
+      "sleeve": 61,
+      "shoulder": 54
+     },
+     "L": {
+      "chestW": 62.5,
+      "waistW": 61.5,
+      "hemW": 59,
+      "length": 72.5,
+      "sleeve": 62,
+      "shoulder": 55.5
+     },
+     "XL": {
+      "chestW": 65,
+      "waistW": 64,
+      "hemW": 61.5,
+      "length": 74,
+      "sleeve": 63,
+      "shoulder": 57
+     },
+     "XXL": {
+      "chestW": 67.5,
+      "waistW": 66.5,
+      "hemW": 64,
+      "length": 75.5,
+      "sleeve": 64,
+      "shoulder": 58.5
+     }
+    }
+   },
+   {
+    "id": "ripstop-cargo-short",
+    "name": "Ripstop Cargo Short",
+    "price": 78,
+    "category": "bottoms",
+    "colourways": [
+     "Black",
+     "Olive",
+     "Sand"
+    ],
+    "sizes": [
+     "28",
+     "30",
+     "32",
+     "34",
+     "36"
+    ],
+    "stock": {
+     "28": 6,
+     "30": 12,
+     "32": 12,
+     "34": 8,
+     "36": 4
+    },
+    "tag": "New",
+    "drop": "07",
+    "fabric": "Cotton-nylon ripstop",
+    "fit": "Relaxed, above the knee",
+    "shape": "pants",
+    "live": true,
+    "added": 6,
+    "fitStyle": "regular",
+    "measurements": {
+     "28": {
+      "waistW": 37.5,
+      "hipW": 50,
+      "thighW": 31.5,
+      "inseam": 20,
+      "rise": 28.5
+     },
+     "30": {
+      "waistW": 40,
+      "hipW": 52.5,
+      "thighW": 33,
+      "inseam": 20,
+      "rise": 29
+     },
+     "32": {
+      "waistW": 42.5,
+      "hipW": 55,
+      "thighW": 34,
+      "inseam": 20,
+      "rise": 29.5
+     },
+     "34": {
+      "waistW": 45,
+      "hipW": 57.5,
+      "thighW": 35,
+      "inseam": 20,
+      "rise": 30
+     },
+     "36": {
+      "waistW": 47.5,
+      "hipW": 60,
+      "thighW": 36.5,
+      "inseam": 20,
+      "rise": 30.5
+     }
+    }
+   },
+   {
+    "id": "puffer-vest",
+    "name": "Puffer Vest",
+    "price": 190,
+    "category": "outerwear",
+    "colourways": [
+     "Black",
+     "Orange"
+    ],
+    "sizes": [
+     "S",
+     "M",
+     "L",
+     "XL"
+    ],
+    "stock": {
+     "S": 6,
+     "M": 8,
+     "L": 6,
+     "XL": 4
+    },
+    "drop": "07",
+    "fabric": "Recycled nylon shell, synthetic fill",
+    "fit": "Regular, boxy",
+    "shape": "jacket",
+    "live": true,
+    "added": 5,
+    "fitStyle": "regular",
+    "measurements": {
+     "S": {
+      "chestW": 53.5,
+      "waistW": 52.5,
+      "hemW": 52.5,
+      "length": 68.5,
+      "shoulder": 44.5
+     },
+     "M": {
+      "chestW": 56,
+      "waistW": 55,
+      "hemW": 55,
+      "length": 70,
+      "shoulder": 46
+     },
+     "L": {
+      "chestW": 58.5,
+      "waistW": 57.5,
+      "hemW": 57.5,
+      "length": 71.5,
+      "shoulder": 47.5
+     },
+     "XL": {
+      "chestW": 61,
+      "waistW": 60,
+      "hemW": 60,
+      "length": 73,
+      "shoulder": 49
+     }
+    }
+   },
+   {
+    "id": "fleece-quarter-zip",
+    "name": "Fleece Quarter-Zip",
+    "price": 110,
+    "category": "tops",
+    "colourways": [
+     "Grey",
+     "Black",
+     "Cream"
+    ],
+    "sizes": [
+     "M",
+     "L",
+     "XL"
+    ],
+    "stock": {
+     "M": 10,
+     "L": 10,
+     "XL": 6
+    },
+    "drop": "07",
+    "fabric": "Polar fleece, nylon yoke",
+    "fit": "Relaxed",
+    "shape": "hoodie",
+    "photo": "/products/cream.jpg",
+    "live": true,
+    "added": 4,
+    "fitStyle": "regular",
+    "measurements": {
+     "M": {
+      "chestW": 58,
+      "waistW": 57,
+      "hemW": 54,
+      "length": 71,
+      "sleeve": 64,
+      "shoulder": 49
+     },
+     "L": {
+      "chestW": 60.5,
+      "waistW": 59.5,
+      "hemW": 56.5,
+      "length": 72.5,
+      "sleeve": 65,
+      "shoulder": 50.5
+     },
+     "XL": {
+      "chestW": 63,
+      "waistW": 62,
+      "hemW": 59,
+      "length": 74,
+      "sleeve": 66,
+      "shoulder": 52
+     }
+    }
+   },
+   {
+    "id": "5-panel-cap",
+    "name": "5-Panel Cap",
+    "price": 38,
+    "category": "accessories",
+    "colourways": [
+     "Black",
+     "White",
+     "Red",
+     "Olive",
+     "Navy",
+     "Sand"
+    ],
+    "sizes": [
+     "One size"
+    ],
+    "stock": {
+     "One size": 0
+    },
+    "tag": "Sold out",
+    "drop": "06",
+    "fabric": "Nylon, adjustable strap",
+    "fit": "One size",
+    "live": true,
+    "added": 3
+   },
+   {
+    "id": "racing-crew",
+    "name": "Racing Crew",
+    "price": 110,
+    "category": "tops",
+    "colourways": [
+     "Black",
+     "Red"
+    ],
+    "sizes": [
+     "S",
+     "M",
+     "L",
+     "XL",
+     "XXL"
+    ],
+    "stock": {
+     "S": 6,
+     "M": 10,
+     "L": 10,
+     "XL": 6,
+     "XXL": 2
+    },
+    "drop": "07",
+    "fabric": "380gsm loopback cotton",
+    "fit": "Boxy",
+    "shape": "hoodie",
+    "photo": "/products/black.jpg",
+    "live": true,
+    "added": 2,
+    "fitStyle": "oversized",
+    "measurements": {
+     "S": {
+      "chestW": 57.5,
+      "waistW": 56.5,
+      "hemW": 53.5,
+      "length": 69.5,
+      "sleeve": 59,
+      "shoulder": 51.5
+     },
+     "M": {
+      "chestW": 60,
+      "waistW": 59,
+      "hemW": 56,
+      "length": 71,
+      "sleeve": 60,
+      "shoulder": 53
+     },
+     "L": {
+      "chestW": 62.5,
+      "waistW": 61.5,
+      "hemW": 58.5,
+      "length": 72.5,
+      "sleeve": 61,
+      "shoulder": 54.5
+     },
+     "XL": {
+      "chestW": 65,
+      "waistW": 64,
+      "hemW": 61,
+      "length": 74,
+      "sleeve": 62,
+      "shoulder": 56
+     },
+     "XXL": {
+      "chestW": 67.5,
+      "waistW": 66.5,
+      "hemW": 63.5,
+      "length": 75.5,
+      "sleeve": 63,
+      "shoulder": 57.5
+     }
+    }
+   },
+   {
+    "id": "moto-bomber",
+    "name": "Moto Bomber",
+    "price": 210,
+    "category": "outerwear",
+    "colourways": [
+     "Black"
+    ],
+    "sizes": [
+     "S",
+     "M",
+     "L",
+     "XL",
+     "XXL"
+    ],
+    "stock": {
+     "S": 4,
+     "M": 6,
+     "L": 6,
+     "XL": 3
+    },
+    "run": 150,
+    "drop": "07",
+    "fabric": "Waxed cotton, quilted lining",
+    "fit": "Cropped, boxy",
+    "shape": "jacket",
+    "photo": "/products/olive.jpg",
+    "live": true,
+    "added": 1,
+    "fitStyle": "oversized",
+    "measurements": {
+     "S": {
+      "chestW": 58.5,
+      "waistW": 56.5,
+      "hemW": 53.5,
+      "length": 67.5,
+      "sleeve": 60,
+      "shoulder": 51.5
+     },
+     "M": {
+      "chestW": 61,
+      "waistW": 59,
+      "hemW": 56,
+      "length": 69,
+      "sleeve": 61,
+      "shoulder": 53
+     },
+     "L": {
+      "chestW": 63.5,
+      "waistW": 61.5,
+      "hemW": 58.5,
+      "length": 70.5,
+      "sleeve": 62,
+      "shoulder": 54.5
+     },
+     "XL": {
+      "chestW": 66,
+      "waistW": 64,
+      "hemW": 61,
+      "length": 72,
+      "sleeve": 63,
+      "shoulder": 56
+     },
+     "XXL": {
+      "chestW": 68.5,
+      "waistW": 66.5,
+      "hemW": 63.5,
+      "length": 73.5,
+      "sleeve": 64,
+      "shoulder": 57.5
+     }
+    }
+   }
+  ],
+  "sections": [
+   {
+    "k": "hero",
+    "l": "Hero campaign",
+    "d": "Image, headline, button",
+    "on": true
+   },
+   {
+    "k": "countdown",
+    "l": "Drop countdown",
+    "d": "Red banner with timer",
+    "on": true
+   },
+   {
+    "k": "grid",
+    "l": "Latest products",
+    "d": "Live products, 4 per row",
+    "on": true
+   },
+   {
+    "k": "wear",
+    "l": "Wear carousel",
+    "d": "Model photo, garments rotate on",
+    "on": true
+   },
+   {
+    "k": "cats",
+    "l": "Category tiles",
+    "d": "Tops, Bottoms, Outerwear, Accessories",
+    "on": true
+   },
+   {
+    "k": "news",
+    "l": "Newsletter",
+    "d": "Drop alert sign-up",
+    "on": true
+   }
+  ],
+  "hero": {
+   "title": "CONCRETE SEASON",
+   "kicker": "Drop 07 / Autumn 26",
+   "cta": "Shop the drop",
+   "body": "Heavyweight cotton, ripstop and nylon. 22 pieces, made in limited runs."
+  },
+  "wear": {
+   "garmentIds": [
+    "nylon-track-jacket",
+    "racing-crew",
+    "boxy-heavy-tee"
+   ],
+   "aligned": true,
+   "images": {
+    "model": "/lookbook/model.jpg",
+    "nylon-track-jacket": "/lookbook/red.webp",
+    "racing-crew": "/lookbook/black.webp",
+    "moto-bomber": "/lookbook/olive.webp",
+    "fleece-quarter-zip": "/lookbook/cream.webp"
+   },
+   "topPct": 23,
+   "scalePct": 84,
+   "xPct": 0,
+   "colorPhotos": true,
+   "rotateSeconds": 3,
+   "title": "THE JACKET COLLECTION",
+   "alignedFits": {
+    "nylon-track-jacket": {
+     "topPct": 6,
+     "scalePct": 73.5,
+     "xPct": 3,
+     "hPct": 92,
+     "wPct": 115.5
+    },
+    "racing-crew": {
+     "topPct": 3.5,
+     "scalePct": 70.5,
+     "xPct": 4,
+     "wPct": 115,
+     "hPct": 95
+    },
+    "boxy-heavy-tee": {
+     "topPct": 2.5,
+     "scalePct": 74,
+     "xPct": 1,
+     "hPct": 89.5,
+     "wPct": 109.5
+    }
+   },
+   "frame": {
+    "h": 103,
+    "w": 99.5
+   }
+  }
+ },
+ "images": {
+  "hero": "/snapshot/hero-538e21bc.jpg",
+  "p-480gsm-hoodie-0": "/snapshot/p-480gsm-hoodie-0-49c7241b.jpg",
+  "p-480gsm-hoodie-1": "/snapshot/p-480gsm-hoodie-1-7a06c5e8.jpg",
+  "p-480gsm-hoodie-2": "/snapshot/p-480gsm-hoodie-2-79124527.jpg",
+  "p-480gsm-hoodie-3": "/snapshot/p-480gsm-hoodie-3-2c552037.jpg",
+  "p-5-panel-cap-0": "/snapshot/p-5-panel-cap-0-4bbdbb7c.jpg",
+  "p-5-panel-cap-1": "/snapshot/p-5-panel-cap-1-9dc96ab6.jpg",
+  "p-5-panel-cap-2": "/snapshot/p-5-panel-cap-2-f4dde051.jpg",
+  "p-5-panel-cap-3": "/snapshot/p-5-panel-cap-3-c89e7293.jpg",
+  "p-boxy-heavy-tee-0": "/snapshot/p-boxy-heavy-tee-0-fa163b59.jpg",
+  "p-boxy-heavy-tee-1": "/snapshot/p-boxy-heavy-tee-1-7860332e.jpg",
+  "p-boxy-heavy-tee-2": "/snapshot/p-boxy-heavy-tee-2-526d8832.jpg",
+  "p-boxy-heavy-tee-3": "/snapshot/p-boxy-heavy-tee-3-4b3354df.jpg",
+  "p-double-knee-carpenter-0": "/snapshot/p-double-knee-carpenter-0-7b60abde.jpg",
+  "p-double-knee-carpenter-1": "/snapshot/p-double-knee-carpenter-1-474efaea.jpg",
+  "p-double-knee-carpenter-2": "/snapshot/p-double-knee-carpenter-2-4df74d67.jpg",
+  "p-double-knee-carpenter-3": "/snapshot/p-double-knee-carpenter-3-38bbf6b6.jpg",
+  "p-fleece-quarter-zip-0": "/snapshot/p-fleece-quarter-zip-0-2a226a84.jpg",
+  "p-fleece-quarter-zip-1": "/snapshot/p-fleece-quarter-zip-1-5ae8e152.jpg",
+  "p-fleece-quarter-zip-2": "/snapshot/p-fleece-quarter-zip-2-47bdbe6a.jpg",
+  "p-fleece-quarter-zip-3": "/snapshot/p-fleece-quarter-zip-3-609396c0.jpg",
+  "p-nylon-track-jacket-0": "/snapshot/p-nylon-track-jacket-0-700a90e9.jpg",
+  "p-nylon-track-jacket-1": "/snapshot/p-nylon-track-jacket-1-b26af2e7.jpg",
+  "p-nylon-track-jacket-2": "/snapshot/p-nylon-track-jacket-2-3cd42f0f.jpg",
+  "p-nylon-track-jacket-3": "/snapshot/p-nylon-track-jacket-3-a3e259ba.jpg",
+  "p-puffer-vest-0": "/snapshot/p-puffer-vest-0-2d9e23aa.jpg",
+  "p-puffer-vest-1": "/snapshot/p-puffer-vest-1-ec463f74.jpg",
+  "p-puffer-vest-2": "/snapshot/p-puffer-vest-2-acd5f38d.jpg",
+  "p-puffer-vest-3": "/snapshot/p-puffer-vest-3-286a069f.jpg",
+  "p-ripstop-cargo-short-0": "/snapshot/p-ripstop-cargo-short-0-28e098f0.jpg",
+  "p-ripstop-cargo-short-1": "/snapshot/p-ripstop-cargo-short-1-5e7dd17a.jpg",
+  "p-ripstop-cargo-short-2": "/snapshot/p-ripstop-cargo-short-2-150e106e.jpg",
+  "p-ripstop-cargo-short-3": "/snapshot/p-ripstop-cargo-short-3-630941b9.jpg",
+  "tryon-model-female": "/snapshot/tryon-model-female-8d83afc2.jpg",
+  "tryon-model-male": "/snapshot/tryon-model-male-42be5cde.jpg",
+  "wear-g-480gsm-hoodie": "/snapshot/wear-g-480gsm-hoodie-70c6b827.jpg",
+  "wear-g-boxy-heavy-tee": "/snapshot/wear-g-boxy-heavy-tee-027b9062.png",
+  "wear-g-double-knee-carpenter": "/snapshot/wear-g-double-knee-carpenter-348f7c33.png",
+  "wear-g-fleece-quarter-zip": "/snapshot/wear-g-fleece-quarter-zip-1d9a0baf.png",
+  "wear-g-moto-bomber": "/snapshot/wear-g-moto-bomber-ea022634.png",
+  "wear-g-nylon-track-jacket": "/snapshot/wear-g-nylon-track-jacket-77f08b7b.png",
+  "wear-g-puffer-vest": "/snapshot/wear-g-puffer-vest-57e95955.png",
+  "wear-g-racing-crew": "/snapshot/wear-g-racing-crew-f1deff14.png",
+  "wear-model": "/snapshot/wear-model-4feaa650.jpg"
+ }
+}
